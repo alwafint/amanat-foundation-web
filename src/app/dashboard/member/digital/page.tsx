@@ -1,229 +1,256 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Globe, FileText, Wifi, Printer, 
-  CreditCard, Briefcase, Map, ShieldCheck, 
-  X, Send, Info 
+  Smartphone, Zap, Wifi, FileText, Plane, Fingerprint, 
+  X, Send, PhoneCall, CreditCard, Globe
 } from "lucide-react";
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase } from '../../../../lib/supabaseClient'; 
 
 export default function DigitalServicePage() {
-  const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('All');
-  
-  // ফর্ম স্টেট
-  const [selectedService, setSelectedService] = useState('');
-  const [applicantName, setApplicantName] = useState('');
-  const [details, setDetails] = useState('');
-  const [docLink, setDocLink] = useState('');
+  const [user, setUser] = useState<any>(null);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
-  // --- ক্যাটাগরি ---
-  const categories = ["All", "নাগরিক সেবা", "ভূমি সেবা", "বিল ও পেমেন্ট", "ছাত্র ও চাকরি"];
+  // --- STATES FOR FORMS ---
+  const [mobileNo, setMobileNo] = useState('');
+  const [operator, setOperator] = useState('Grameenphone');
+  const [amount, setAmount] = useState('');
+  const [billType, setBillType] = useState('Electricity');
+  const [accountNo, setAccountNo] = useState('');
 
-  // --- কালার স্টাইল জেনারেটর ---
-  const getStyle = (category: string) => {
-    switch (category) {
-      case "নাগরিক সেবা":
-        return { 
-          bg: "bg-cyan-50", border: "border-cyan-100", 
-          iconText: "text-cyan-600", badge: "bg-cyan-100 text-cyan-700", 
-          btn: "bg-cyan-600 hover:bg-cyan-700" 
-        };
-      case "ভূমি সেবা":
-        return { 
-          bg: "bg-emerald-50", border: "border-emerald-100", 
-          iconText: "text-emerald-600", badge: "bg-emerald-100 text-emerald-700", 
-          btn: "bg-emerald-600 hover:bg-emerald-700" 
-        };
-      case "বিল ও পেমেন্ট":
-        return { 
-          bg: "bg-orange-50", border: "border-orange-100", 
-          iconText: "text-orange-600", badge: "bg-orange-100 text-orange-700", 
-          btn: "bg-orange-600 hover:bg-orange-700" 
-        };
-      default: // ছাত্র ও চাকরি
-        return { 
-          bg: "bg-blue-50", border: "border-blue-100", 
-          iconText: "text-blue-600", badge: "bg-blue-100 text-blue-700", 
-          btn: "bg-blue-600 hover:bg-blue-700" 
-        };
-    }
-  };
+  // --- INITIALIZATION ---
+  useEffect(() => {
+    const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(localUser);
+  }, []);
 
-  // --- ডিজিটাল সেবার তালিকা ---
-  const services = [
-    // ১. নাগরিক সেবা
-    { title: "জন্ম/মৃত্যু নিবন্ধন", category: "নাগরিক সেবা", icon: <FileText/>, desc: "নতুন নিবন্ধন আবেদন বা সংশোধনের কাজ।" },
-    { title: "NID সংশোধন/হারানো", category: "নাগরিক সেবা", icon: <ShieldCheck/>, desc: "ভোটার আইডি কার্ড সংশোধন বা রি-ইস্যু আবেদন।" },
-    { title: "পাসপোর্ট আবেদন", category: "নাগরিক সেবা", icon: <Globe/>, desc: "ই-পাসপোর্টের ফরম পূরণ ও ব্যাংক ড্রাফট।" },
-    
-    // ২. ভূমি সেবা
-    { title: "ই-পর্চা / খতিয়ান", category: "ভূমি সেবা", icon: <Map/>, desc: "অনলাইনে জমির খতিয়ান বা পর্চা তোলা।" },
-    { title: "ভূমি উন্নয়ন কর", category: "ভূমি সেবা", icon: <CreditCard/>, desc: "অনলাইনে জমির খাজনা বা কর পরিশোধ।" },
-    { title: "নামজারি আবেদন", category: "ভূমি সেবা", icon: <FileText/>, desc: "জমির মালিকানা পরিবর্তনের মিউটেশন আবেদন।" },
-
-    // ৩. বিল ও পেমেন্ট
-    { title: "পল্লী বিদ্যুৎ বিল", category: "বিল ও পেমেন্ট", icon: <Wifi/>, desc: "পোস্টপেইড বিল দেওয়া বা প্রিপেইড মিটার রিচার্জ।" },
-    { title: "গ্যাস ও পানি বিল", category: "বিল ও পেমেন্ট", icon: <CreditCard/>, desc: "লাইনের গ্যাস বা ওয়াসার বিল পরিশোধ।" },
-    
-    // ৪. ছাত্র ও চাকরি
-    { title: "চাকরির আবেদন", category: "ছাত্র ও চাকরি", icon: <Briefcase/>, desc: "সরকারি বা বেসরকারি চাকরির অনলাইন আবেদন।" },
-    { title: "সিভি (CV) তৈরি", category: "ছাত্র ও চাকরি", icon: <Printer/>, desc: "প্রফেশনাল বায়োডাটা বা সিভি তৈরি।" },
-    { title: "ভর্তি ফরম পূরণ", category: "ছাত্র ও চাকরি", icon: <Globe/>, desc: "স্কুল, কলেজ বা বিশ্ববিদ্যালয়ে ভর্তির আবেদন।" },
-    { title: "রেজাল্ট দেখা", category: "ছাত্র ও চাকরি", icon: <FileText/>, desc: "বোর্ড বা চাকরির পরীক্ষার ফলাফল প্রিন্ট।" },
-  ];
-
-  const filteredItems = activeTab === 'All' ? services : services.filter(item => item.category === activeTab);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // --- SUBMIT HANDLER ---
+  const submitData = async (serviceName: string, details: string) => {
     setLoading(true);
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-
     try {
       const { error } = await supabase.from('bookings').insert([{
-        member_name: user?.full_name || 'Guest', 
-        mobile: user?.mobile,
-        service_category: 'DigitalService', 
-        item_name: selectedService,
-        quantity: "Service Request", 
-        assigned_staff: `নাম: ${applicantName}, বিবরণ: ${details}, ডক লিংক: ${docLink}`,
-        status: 'pending'
+        member_name: user?.full_name || 'Guest',
+        mobile: user?.mobile || mobileNo,
+        service_category: 'Digital Service',
+        item_name: serviceName,
+        description: details,
+        status: 'pending',
+        required_date: new Date().toISOString()
       }]);
 
       if (error) throw error;
-      alert("আবেদন জমা হয়েছে! আমাদের কম্পিউটার অপারেটর যোগাযোগ করবে।");
-      setModalOpen(false); setApplicantName(''); setDetails(''); setDocLink('');
-    } catch (err: any) { alert("সমস্যা হয়েছে: " + err.message); } 
-    finally { setLoading(false); }
+      alert("আবেদন সফল হয়েছে! আমাদের প্রতিনিধি দ্রুত প্রসেস করবে।");
+      setActiveModal(null);
+      
+      // Reset
+      setMobileNo(''); setAmount(''); setAccountNo('');
+    } catch (err: any) {
+      alert("সমস্যা হয়েছে: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // --- SERVICES LIST ---
+  const digitalServices = [
+    {
+      id: 'recharge',
+      title: "মোবাইল রিচার্জ",
+      icon: <Smartphone />,
+      desc: "যেকোনো নাম্বারে ফ্লেক্সিলোড বা রিচার্জ।",
+      color: "emerald",
+      badge: "Fast"
+    },
+    {
+      id: 'utility',
+      title: "বিল পেমেন্ট",
+      icon: <Zap />,
+      desc: "বিদ্যুৎ, গ্যাস বা পানির বিল পরিশোধ।",
+      color: "yellow",
+      badge: "Easy"
+    },
+    {
+      id: 'internet',
+      title: "ইন্টারনেট বিল",
+      icon: <Wifi />,
+      desc: "ওয়াইফাই বা ব্রডব্যান্ড বিল দিন ঘরে বসেই।",
+      color: "cyan",
+      badge: "No Fee"
+    },
+    {
+      id: 'birth',
+      title: "জন্ম নিবন্ধন",
+      icon: <FileText />,
+      desc: "নতুন জন্ম নিবন্ধন বা সংশোধনের আবেদন।",
+      color: "purple",
+      badge: "Official"
+    },
+    {
+      id: 'passport',
+      title: "পাসপোর্ট ফি",
+      icon: <Plane />,
+      desc: "ই-পাসপোর্ট ফি জমা ও ফর্ম পূরণ।",
+      color: "blue",
+      badge: "Secure"
+    },
+    {
+      id: 'nid',
+      title: "এনআইডি সেবা",
+      icon: <Fingerprint />,
+      desc: "ভোটার আইডি কার্ড সংশোধন বা হারানো কার্ড।",
+      color: "rose",
+      badge: "Govt"
+    }
+  ];
+
   return (
-    <div className="min-h-screen pb-12 bg-slate-50/50">
+    <div className="relative min-h-screen pb-20">
       
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-cyan-600 to-teal-500 rounded-3xl p-8 text-white mb-10 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="bg-gradient-to-r from-cyan-700 to-blue-600 rounded-2xl p-6 md:p-8 text-white mb-8 shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="relative z-10">
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-3">ডিজিটাল সেবা কেন্দ্র</h1>
-          <p className="text-cyan-100 max-w-2xl">
-            শহরে যাওয়ার ঝামেলা শেষ। এখন হাতের কাছেই পাচ্ছেন পাসপোর্ট, জন্ম নিবন্ধন, জমির পর্চাসহ সকল ডিজিটাল সুবিধা।
+          <h1 className="text-2xl md:text-4xl font-bold mb-2">ডিজিটাল সেবা কেন্দ্র</h1>
+          <p className="text-cyan-100 text-sm md:text-base opacity-90">
+            মোবাইল রিচার্জ, বিল পেমেন্ট এবং সরকারি সব ই-সেবা এখন হাতের মুঠোয়।
           </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-3 overflow-x-auto pb-4 mb-4 custom-scrollbar px-1">
-        {categories.map((cat, idx) => (
-          <button
-            key={idx}
-            onClick={() => setActiveTab(cat)}
-            className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold transition-all ${
-              activeTab === cat 
-                ? 'bg-cyan-700 text-white shadow-lg' 
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
       {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredItems.map((item, index) => {
-          const style = getStyle(item.category);
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {digitalServices.map((item) => {
+          // Dynamic styles based on color
+          const colorStyles: any = {
+            emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "hover:border-emerald-400" },
+            yellow: { bg: "bg-yellow-50", text: "text-yellow-600", border: "hover:border-yellow-400" },
+            cyan: { bg: "bg-cyan-50", text: "text-cyan-600", border: "hover:border-cyan-400" },
+            purple: { bg: "bg-purple-50", text: "text-purple-600", border: "hover:border-purple-400" },
+            blue: { bg: "bg-blue-50", text: "text-blue-600", border: "hover:border-blue-400" },
+            rose: { bg: "bg-rose-50", text: "text-rose-600", border: "hover:border-rose-400" },
+          };
+          const style = colorStyles[item.color] || colorStyles.emerald;
+
           return (
-            <div key={index} className={`bg-white p-6 rounded-2xl border ${style.border} shadow-sm hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 flex flex-col h-full`}>
-              
+            <div 
+              key={item.id}
+              onClick={() => setActiveModal(item.id)}
+              className={`bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all duration-300 cursor-pointer group hover:-translate-y-1 ${style.border}`}
+            >
               <div className="flex justify-between items-start mb-4">
-                <div className={`w-14 h-14 ${style.bg} ${style.iconText} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 28 })}
+                {/* --- FIX: Added <any> to ReactElement --- */}
+                <div className={`w-14 h-14 ${style.bg} ${style.text} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  {React.cloneElement(item.icon as React.ReactElement<any>, { size: 28 })}
                 </div>
-                <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.badge}`}>
-                  {item.category}
+                <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.bg} ${style.text}`}>
+                  {item.badge}
                 </span>
               </div>
-
-              <h3 className="text-lg font-bold text-slate-800 mb-2">{item.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-grow">{item.desc}</p>
-
-              <button 
-                onClick={() => { setSelectedService(item.title); setModalOpen(true); }} 
-                className={`w-full py-2.5 rounded-lg text-white font-bold text-sm shadow transition-all flex items-center justify-center gap-2 ${style.btn}`}
-              >
-                আবেদন করুন <Send size={16}/>
-              </button>
+              
+              <h3 className="text-xl font-bold text-slate-800 mb-2">{item.title}</h3>
+              <p className="text-slate-500 text-sm">{item.desc}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Application Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-            
-            <div className="flex justify-between items-center mb-6 pb-4 border-b">
-              <div>
-                <h3 className="text-xl font-bold text-slate-800">{selectedService}</h3>
-                <p className="text-xs text-slate-500">প্রয়োজনীয় তথ্য দিয়ে ফর্মটি পূরণ করুন</p>
-              </div>
-              <button onClick={() => setModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20}/></button>
+      {/* --- MODALS --- */}
+
+      {/* 1. RECHARGE MODAL */}
+      {activeModal === 'recharge' && (
+        <ModalWrapper title="মোবাইল রিচার্জ" icon={<Smartphone size={24}/>} onClose={() => setActiveModal(null)} colorClass="from-emerald-600 to-emerald-500">
+          <form onSubmit={(e) => { e.preventDefault(); submitData('Mobile Recharge', `${operator} - ${mobileNo}, Amount: ${amount}`); }} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">অপারেটর</label>
+              <select value={operator} onChange={(e) => setOperator(e.target.value)} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500">
+                <option>Grameenphone</option>
+                <option>Banglalink</option>
+                <option>Robi</option>
+                <option>Airtel</option>
+                <option>Teletalk</option>
+              </select>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5 overflow-y-auto custom-scrollbar">
-              
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">আবেদনকারীর নাম</label>
-                <input 
-                  type="text" 
-                  required 
-                  onChange={(e) => setApplicantName(e.target.value)} 
-                  className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-cyan-500 transition" 
-                  placeholder="নাম লিখুন" 
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">প্রয়োজনীয় তথ্য (বিস্তারিত)</label>
-                <textarea 
-                  required 
-                  onChange={(e) => setDetails(e.target.value)} 
-                  className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-cyan-500 h-24" 
-                  placeholder="যেমন: জন্ম তারিখ, পিতার নাম, বা বিল নম্বর..." 
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">ডকুমেন্ট লিংক (যদি থাকে)</label>
-                <input 
-                  type="text" 
-                  onChange={(e) => setDocLink(e.target.value)} 
-                  className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-cyan-500 transition" 
-                  placeholder="গুগল ড্রাইভ বা ছবির লিংক (অপশনাল)" 
-                />
-              </div>
-
-              <div className="bg-cyan-50 p-4 rounded-xl border border-cyan-100 text-xs text-cyan-800 flex gap-3 items-start">
-                <Info size={18} className="shrink-0 text-cyan-600"/> 
-                <span>
-                  সরকারি ফি এবং আমাদের সার্ভিস চার্জ প্রযোজ্য হবে। আবেদন জমা দেওয়ার পর অপারেটর আপনাকে খরচ জানিয়ে কাজ শুরু করবে।
-                </span>
-              </div>
-
-              <button 
-                disabled={loading} 
-                className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-3.5 rounded-xl font-bold hover:shadow-lg transition disabled:opacity-70"
-              >
-                {loading ? 'পাঠানো হচ্ছে...' : 'আবেদন জমা দিন'}
-              </button>
-            </form>
-          </div>
-        </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">মোবাইল নম্বর</label>
+              <input type="tel" required value={mobileNo} onChange={(e) => setMobileNo(e.target.value)} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="017xxxxxxxx" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">টাকার পরিমাণ</label>
+              <input type="number" required value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="50" />
+            </div>
+            <button disabled={loading} className="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700">{loading ? 'অপেক্ষা করুন...' : 'রিচার্জ করুন'}</button>
+          </form>
+        </ModalWrapper>
       )}
+
+      {/* 2. UTILITY / INTERNET MODAL */}
+      {(activeModal === 'utility' || activeModal === 'internet') && (
+        <ModalWrapper title="বিল পেমেন্ট" icon={<CreditCard size={24}/>} onClose={() => setActiveModal(null)} colorClass="from-cyan-600 to-blue-500">
+          <form onSubmit={(e) => { e.preventDefault(); submitData('Bill Payment', `${billType} - Acc: ${accountNo}, Amount: ${amount}`); }} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">বিলের ধরণ</label>
+              <select value={billType} onChange={(e) => setBillType(e.target.value)} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-500">
+                <option>পল্লী বিদ্যুৎ (Prepaid)</option>
+                <option>পল্লী বিদ্যুৎ (Postpaid)</option>
+                <option>ইন্টারনেট / ওয়াইফাই</option>
+                <option>গ্যাস বিল</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">অ্যাকাউন্ট / মিটার নং</label>
+              <input type="text" required value={accountNo} onChange={(e) => setAccountNo(e.target.value)} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">বিলের পরিমাণ</label>
+              <input type="number" required value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-500" placeholder="500" />
+            </div>
+            <button disabled={loading} className="w-full bg-cyan-600 text-white py-3 rounded-lg font-bold hover:bg-cyan-700">{loading ? 'অপেক্ষা করুন...' : 'বিল পরিশোধ করুন'}</button>
+          </form>
+        </ModalWrapper>
+      )}
+
+      {/* 3. GOVT SERVICES MODAL (Birth/Passport/NID) */}
+      {(activeModal === 'birth' || activeModal === 'passport' || activeModal === 'nid') && (
+        <ModalWrapper title="সরকারি ই-সেবা" icon={<Globe size={24}/>} onClose={() => setActiveModal(null)} colorClass="from-purple-600 to-pink-500">
+           <form onSubmit={(e) => { e.preventDefault(); submitData('Govt Service', `Service: ${activeModal}, Note: ${accountNo}`); }} className="space-y-4">
+            <div className="bg-purple-50 p-3 rounded text-sm text-purple-700 mb-4">
+              এই সেবার জন্য আমাদের প্রতিনিধি আপনার সাথে যোগাযোগ করে প্রয়োজনীয় কাগজপত্র সংগ্রহ করবেন।
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">আপনার নাম</label>
+              <input type="text" defaultValue={user?.full_name} disabled className="w-full p-3 border rounded-lg bg-slate-100" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">মোবাইল নম্বর</label>
+              <input type="tel" defaultValue={user?.mobile} disabled className="w-full p-3 border rounded-lg bg-slate-100" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">কি প্রয়োজন? (বিস্তারিত)</label>
+              <textarea rows={3} required value={accountNo} onChange={(e) => setAccountNo(e.target.value)} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="যেমন: নতুন জন্ম নিবন্ধনের আবেদন..."></textarea>
+            </div>
+            <button disabled={loading} className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700">{loading ? 'অপেক্ষা করুন...' : 'আবেদন জমা দিন'}</button>
+          </form>
+        </ModalWrapper>
+      )}
+
+    </div>
+  );
+}
+
+// --- REUSABLE MODAL WRAPPER ---
+function ModalWrapper({ title, icon, onClose, colorClass, children }: any) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+        <div className={`bg-gradient-to-r ${colorClass} p-5 text-white shrink-0 flex justify-between items-center`}>
+          <h3 className="text-xl font-bold flex items-center gap-2">{icon} {title}</h3>
+          <button onClick={onClose} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition text-white"><X size={24} /></button>
+        </div>
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
