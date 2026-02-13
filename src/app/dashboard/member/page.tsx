@@ -1,186 +1,137 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from "next/link";
 import { 
-  Menu, X, Home, Wallet, CreditCard, Calendar, LogOut, 
-  TrendingUp, Bell, User, History, ChevronRight 
+  Tractor, Wallet, HeartPulse, GraduationCap, 
+  CheckCircle, ArrowRight, Scale, LayoutGrid, 
+  Sprout
 } from "lucide-react";
 
 export default function MemberDashboard() {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  // ডামি লেনদেন ডাটা
-  const transactions = [
-    { id: 1, date: "১০ অক্টো, ২০২৪", desc: "মাসিক সঞ্চয় জমা", amount: 500, type: 'credit', status: 'completed' },
-    { id: 2, date: "০৫ অক্টো, ২০২৪", desc: "লোন কিস্তি পরিশোধ", amount: 1500, type: 'debit', status: 'completed' },
-    { id: 3, date: "০১ অক্টো, ২০২৪", desc: "সার্ভিস চার্জ", amount: 50, type: 'debit', status: 'pending' },
+  // --- SERVICES DATA ---
+  const services = [
+    {
+      title: "কৃষক সেবা",
+      customLink: "/dashboard/member/farmer-service",
+      icon: <Tractor size={28} />,
+      desc: "আধুনিক যন্ত্রপাতি ভাড়া, শস্য ব্যাংক এবং বীজ-সার অর্ডার করুন।",
+      bgClass: "bg-emerald-50",
+      iconBg: "bg-emerald-100",
+      iconColor: "text-emerald-700",
+      borderHover: "hover:border-emerald-300",
+      cornerColor: "bg-emerald-50",
+      btnClass: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
+    },
+    {
+      title: "বিনিয়োগ ও লোন",
+      customLink: "/dashboard/member/investment",
+      icon: <Wallet size={28} />,
+      desc: "সহজ শর্তে হালাল বিনিয়োগ এবং জরুরি লোন সুবিধা গ্রহণ করুন।",
+      bgClass: "bg-blue-50",
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-700",
+      borderHover: "hover:border-blue-300",
+      cornerColor: "bg-blue-50",
+      btnClass: "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+    },
+    {
+      title: "স্বাস্থ্য সুরক্ষা",
+      customLink: "/dashboard/member/health",
+      icon: <HeartPulse size={28} />,
+      desc: "ফ্রি টেলিমেডিসিন, মেডিকেল ক্যাম্প এবং ডিসকাউন্টে ঔষধ।",
+      bgClass: "bg-rose-50",
+      iconBg: "bg-rose-100",
+      iconColor: "text-rose-700",
+      borderHover: "hover:border-rose-300",
+      cornerColor: "bg-rose-50",
+      btnClass: "bg-rose-600 hover:bg-rose-700 shadow-rose-200"
+    },
+    {
+      title: "কারিগরি প্রশিক্ষণ",
+      customLink: "/dashboard/member/education",
+      icon: <GraduationCap size={28} />,
+      desc: "দক্ষতা উন্নয়নে কারিগরি প্রশিক্ষণ ও স্কলারশিপের আবেদন।",
+      bgClass: "bg-purple-50",
+      iconBg: "bg-purple-100",
+      iconColor: "text-purple-700",
+      borderHover: "hover:border-purple-300",
+      cornerColor: "bg-purple-50",
+      btnClass: "bg-purple-600 hover:bg-purple-700 shadow-purple-200"
+    },
+    {
+      title: "আইনি সহায়তা",
+      customLink: "/dashboard/member/legal-aid",
+      icon: <Scale size={28} />,
+      desc: "জমিজমা ও পারিবারিক বিরোধে অভিজ্ঞ আইনজীবীর পরামর্শ।",
+      bgClass: "bg-indigo-50",
+      iconBg: "bg-indigo-100",
+      iconColor: "text-indigo-700",
+      borderHover: "hover:border-indigo-300",
+      cornerColor: "bg-indigo-50",
+      btnClass: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+    },
+    {
+      title: "ডিজিটাল সেবা",
+      customLink: "/dashboard/member/digital",
+      icon: <CheckCircle size={28} />,
+      desc: "অনলাইন সেবা, বিল পেমেন্ট এবং ই-সেবা সহায়তা।",
+      bgClass: "bg-cyan-50",
+      iconBg: "bg-cyan-100",
+      iconColor: "text-cyan-700",
+      borderHover: "hover:border-cyan-300",
+      cornerColor: "bg-cyan-50",
+      btnClass: "bg-cyan-600 hover:bg-cyan-700 shadow-cyan-200"
+    }
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
+    <div className="relative min-h-screen pb-20 bg-slate-50">
       
-      {/* 1. Sidebar (Desktop & Mobile) */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-emerald-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0
-      `}>
-        <div className="p-6 border-b border-emerald-800 flex justify-between items-center">
-          <div className="font-bold text-xl flex items-center gap-2">
-            <div className="w-8 h-8 bg-white text-emerald-900 rounded flex items-center justify-center">A</div>
-            মেম্বার প্যানেল
-          </div>
-          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-emerald-200 hover:text-white">
-            <X size={24} />
-          </button>
+      {/* --- HERO HEADER --- */}
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-6 md:p-10 text-white mb-8 shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="relative z-10">
+          <h1 className="text-2xl md:text-4xl font-bold mb-3 flex items-center gap-3">
+            <LayoutGrid className="text-slate-300" /> সদস্য সেবা ড্যাশবোর্ড
+          </h1>
+          <p className="text-slate-300 text-sm md:text-base max-w-2xl leading-relaxed opacity-90">
+            আপনার প্রয়োজনীয় সেবাটি গ্রহণ করতে নিচের অপশনগুলো ব্যবহার করুন।
+          </p>
         </div>
+      </div>
 
-        <nav className="p-4 space-y-2">
-          <Link href="#" className="flex items-center gap-3 px-4 py-3 bg-emerald-800 rounded-lg text-white font-medium shadow-md border-l-4 border-yellow-400">
-            <Home size={20} /> ড্যাশবোর্ড
-          </Link>
-          <Link href="#" className="flex items-center gap-3 px-4 py-3 text-emerald-100 hover:bg-emerald-800 rounded-lg hover:text-white transition">
-            <Wallet size={20} /> আমার সঞ্চয়
-          </Link>
-          <Link href="#" className="flex items-center gap-3 px-4 py-3 text-emerald-100 hover:bg-emerald-800 rounded-lg hover:text-white transition">
-            <CreditCard size={20} /> লোন স্ট্যাটাস
-          </Link>
-          <Link href="#" className="flex items-center gap-3 px-4 py-3 text-emerald-100 hover:bg-emerald-800 rounded-lg hover:text-white transition">
-            <History size={20} /> লেনদেন ইতিহাস
-          </Link>
-          <div className="pt-8 mt-4 border-t border-emerald-800">
-            <Link href="/login" className="flex items-center gap-3 px-4 py-3 text-red-300 hover:bg-emerald-800 rounded-lg hover:text-red-200 transition">
-              <LogOut size={20} /> লগ আউট
+      {/* --- SERVICES GRID --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {services.map((item, index) => (
+          <div key={index} className="relative group h-full">
+            <Link 
+              href={item.customLink}
+              className={`block h-full bg-white p-6 rounded-2xl shadow-sm border border-slate-100 ${item.borderHover} transition hover:-translate-y-1 duration-300 relative overflow-hidden flex flex-col`}
+            >
+              <div className={`absolute top-0 right-0 w-24 h-24 ${item.cornerColor} rounded-bl-full -mr-4 -mt-4 transition group-hover:scale-110 duration-500`}></div>
+
+              <div className="relative z-10 flex flex-col h-full">
+                <div className={`w-14 h-14 ${item.iconBg} ${item.iconColor} rounded-full flex items-center justify-center mb-4 shadow-sm`}>
+                  {item.icon}
+                </div>
+
+                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-slate-900 transition-colors">
+                  {item.title}
+                </h3>
+                <p className="text-slate-500 mb-6 text-sm flex-grow leading-relaxed">
+                  {item.desc}
+                </p>
+
+                <button className={`w-full ${item.btnClass} text-white py-3 rounded-xl font-bold transition shadow-lg mt-auto flex items-center justify-center gap-2`}>
+                  প্রবেশ করুন <ArrowRight size={18} />
+                </button>
+              </div>
             </Link>
           </div>
-        </nav>
-      </aside>
-
-      {/* 2. Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
-        
-        {/* Header */}
-        <header className="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-40">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded">
-              <Menu size={24} />
-            </button>
-            <h2 className="text-xl font-bold text-slate-800 hidden sm:block">ড্যাশবোর্ড ওভারভিউ</h2>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition">
-               <Bell size={24} />
-               <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            <div className="flex items-center gap-3 border-l pl-4 border-slate-200">
-              <div className="text-right hidden sm:block">
-                <p className="font-bold text-sm text-slate-800">আব্দুল করিম</p>
-                <p className="text-xs text-slate-500">আইডি: ১২৩৪৫</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
-                <User size={20} />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-6 md:p-8 max-w-7xl mx-auto">
-          {/* Welcome Banner */}
-          <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-2xl p-6 md:p-10 text-white mb-8 shadow-lg relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            <div className="relative z-10">
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">স্বাগতম, আব্দুল করিম 👋</h1>
-              <p className="text-emerald-100 max-w-xl">আপনার বর্তমান ব্যালেন্স এবং লোনের অবস্থা নিচে দেওয়া হলো। নিয়মিত সঞ্চয় করুন, ভবিষ্যৎ গড়ুন।</p>
-            </div>
-          </div>
-          
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg"><Wallet size={24} /></div>
-                <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">+৫০০ (অক্টোবর)</span>
-              </div>
-              <h3 className="text-slate-500 text-sm font-medium">মোট সঞ্চয়</h3>
-              <p className="text-3xl font-bold text-slate-800 mt-1">৳ ১৫,৫০০</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-red-50 text-red-600 rounded-lg"><CreditCard size={24} /></div>
-                <span className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded">সক্রিয়</span>
-              </div>
-              <h3 className="text-slate-500 text-sm font-medium">লোন বাকি</h3>
-              <p className="text-3xl font-bold text-slate-800 mt-1">৳ ১০,০০০</p>
-            </div>
-
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Calendar size={24} /></div>
-                <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">৫ দিন বাকি</span>
-              </div>
-              <h3 className="text-slate-500 text-sm font-medium">পরবর্তী কিস্তি</h3>
-              <p className="text-2xl font-bold text-slate-800 mt-1">১৫ অক্টোবর</p>
-            </div>
-          </div>
-
-          {/* Quick Actions & Recent Transactions */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-fit">
-              <h3 className="font-bold text-slate-800 mb-4">দ্রুত সেবা</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition border border-slate-100">
-                  <Wallet className="mb-2" /> <span>টাকা জমা</span>
-                </button>
-                <button className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition border border-slate-100">
-                  <CreditCard className="mb-2" /> <span>লোন আবেদন</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Transactions Table */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-slate-800">সাম্প্রতিক লেনদেন</h3>
-                <button className="text-sm text-emerald-600 font-bold hover:underline flex items-center">সব দেখুন <ChevronRight size={16} /></button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
-                    <tr>
-                      <th className="p-4">তারিখ</th>
-                      <th className="p-4">বিবরণ</th>
-                      <th className="p-4">স্ট্যাটাস</th>
-                      <th className="p-4 text-right">টাকা</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm">
-                    {transactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-slate-50 transition">
-                        <td className="p-4 text-slate-500 font-medium">{tx.date}</td>
-                        <td className="p-4 text-slate-800 font-bold">{tx.desc}</td>
-                        <td className="p-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                            tx.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {tx.status === 'completed' ? 'সম্পন্ন' : 'প্রক্রিয়াধীন'}
-                          </span>
-                        </td>
-                        <td className={`p-4 text-right font-bold ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {tx.type === 'credit' ? '+' : '-'} ৳{tx.amount}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </main>
+        ))}
+      </div>
     </div>
   );
 }
