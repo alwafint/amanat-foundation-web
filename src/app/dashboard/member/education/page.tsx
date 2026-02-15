@@ -8,9 +8,9 @@ import {
   MonitorPlay, Wrench, ArrowRight, Phone 
 } from "lucide-react";
 
-// ৪ ধাপ পেছনে যেতে হবে
-import Navbar from '../../../../components/layout/Navbar';
-import SiteFooter from '../../../../components/layout/SiteFooter';
+// ৩ ধাপ পেছনে গিয়ে কম্পোনেন্ট ইমপোর্ট
+import Navbar from '../../../components/layout/Navbar';
+import SiteFooter from '../../../components/layout/SiteFooter';
 
 export default function EducationPublicPage() {
   const [activeTab, setActiveTab] = useState('All');
@@ -48,7 +48,7 @@ export default function EducationPublicPage() {
     }
   };
 
-  // --- প্রশিক্ষণের তালিকা (আইকনে সাইজ যুক্ত করা হয়েছে) ---
+  // --- প্রশিক্ষণের তালিকা (আইকনে সাইজ যুক্ত করা হয়েছে - এখানে ফিক্স করা হয়েছে) ---
   const trainingItems = [
     { title: "কম্পিউটার অফিস অ্যাপ্লিকেশন", category: "আইটি ও ফ্রিল্যান্সিং", icon: <Laptop size={28}/>, duration: "৩ মাস", desc: "বেসিক কম্পিউটার, টাইপিং এবং অফিস ম্যানেজমেন্ট।" },
     { title: "গ্রাফিক্স ডিজাইন ও ফ্রিল্যান্সিং", category: "আইটি ও ফ্রিল্যান্সিং", icon: <PenTool size={28}/>, duration: "৬ মাস", desc: "লোগো, ব্যানার ডিজাইন এবং অনলাইন মার্কেটপ্লেস গাইডলাইন।" },
@@ -74,7 +74,6 @@ export default function EducationPublicPage() {
 
       {/* --- HERO SECTION --- */}
       <div className="relative bg-gradient-to-br from-purple-800 via-purple-700 to-indigo-800 text-white py-24 md:py-32 overflow-hidden">
-        {/* Background Decor */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 left-0 w-full h-24 bg-slate-50 clip-path-slant"></div>
 
@@ -132,7 +131,8 @@ export default function EducationPublicPage() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className={`w-14 h-14 ${style.bg} ${style.iconText} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    {item.icon} {/* ফিক্সড: সরাসরি আইকন ব্যবহার */}
+                    {/* ফিক্সড: সরাসরি আইকন রেন্ডার করা হয়েছে */}
+                    {item.icon} 
                   </div>
                   <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.badge}`}>
                     {item.duration}
