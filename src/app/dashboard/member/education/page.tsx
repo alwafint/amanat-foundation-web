@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Laptop, Smartphone, Scissors, Zap, 
   Sprout, Fish, Milk, PenTool, 
   MonitorPlay, Wrench, X, CheckCircle2, ArrowRight 
 } from "lucide-react";
-// আপনার ফোল্ডার স্ট্রাকচার অনুযায়ী পাথ ঠিক রাখুন
-import { supabase } from '../../../lib/supabaseClient'; 
+// সঠিক ইমপোর্ট পাথ (৪ ধাপ পেছনে)
+import { supabase } from '../../../../lib/supabaseClient'; 
 
 export default function TrainingPage() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -36,7 +36,7 @@ export default function TrainingPage() {
     }
   };
 
-  // --- প্রশিক্ষণের তালিকা (বিনিয়োগের সাথে সামঞ্জস্যপূর্ণ) ---
+  // --- প্রশিক্ষণের তালিকা ---
   const trainingItems = [
     { title: "কম্পিউটার অফিস অ্যাপ্লিকেশন", category: "আইটি ও ফ্রিল্যান্সিং", icon: <Laptop size={28}/>, duration: "৩ মাস", desc: "বেসিক কম্পিউটার, টাইপিং এবং অফিস ম্যানেজমেন্ট।" },
     { title: "গ্রাফিক্স ডিজাইন ও ফ্রিল্যান্সিং", category: "আইটি ও ফ্রিল্যান্সিং", icon: <PenTool size={28}/>, duration: "৬ মাস", desc: "লোগো, ব্যানার ডিজাইন এবং অনলাইন মার্কেটপ্লেস গাইডলাইন।" },
@@ -107,7 +107,7 @@ export default function TrainingPage() {
               
               <div className="flex justify-between items-start mb-4">
                 <div className={`w-14 h-14 ${style.bg} ${style.iconText} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  {item.icon} {/* সংশোধিত অংশ: সরাসরি আইকন রেন্ডার করা হয়েছে */}
+                  {item.icon}
                 </div>
                 <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.badge}`}>
                   {item.duration}
@@ -130,8 +130,8 @@ export default function TrainingPage() {
 
       {/* Application Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center mb-6 pb-4 border-b">
               <div>
                 <h3 className="text-xl font-bold text-slate-800">{selectedCourse}</h3>
