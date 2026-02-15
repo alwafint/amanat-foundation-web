@@ -12,6 +12,10 @@ import {
 import Navbar from '../../../components/layout/Navbar';
 import SiteFooter from '../../../components/layout/SiteFooter';
 
+// ৪ ধাপ পেছনে যেতে হবে
+import Navbar from '../../../../components/layout/Navbar';
+import SiteFooter from '../../../../components/layout/SiteFooter';
+
 export default function EducationPublicPage() {
   const [activeTab, setActiveTab] = useState('All');
 
