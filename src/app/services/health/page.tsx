@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   HeartPulse, Pill, Ambulance, Stethoscope, 
   Activity, Baby, HeartHandshake, Microscope, 
-  PhoneCall, ArrowRight, UserCheck, Phone 
+  PhoneCall, ArrowRight, Phone 
 } from "lucide-react";
 
 // ৩ ধাপ পেছনে গিয়ে কম্পোনেন্ট ইমপোর্ট
@@ -18,7 +18,7 @@ export default function HealthPublicPage() {
   // --- ক্যাটাগরি ---
   const categories = ["All", "ডাক্তার ও পরামর্শ", "জরুরি সেবা", "ঔষধ ও টেস্ট", "মা ও শিশু"];
 
-  // --- কালার স্টাইল জেনারেটর (ড্যাশবোর্ডের মতো) ---
+  // --- কালার স্টাইল জেনারেটর ---
   const getStyle = (category: string) => {
     switch (category) {
       case "জরুরি সেবা":
@@ -48,19 +48,19 @@ export default function HealthPublicPage() {
     }
   };
 
-  // --- স্বাস্থ্য সেবার তালিকা ---
+  // --- স্বাস্থ্য সেবার তালিকা (সরাসরি সাইজ দেওয়া হয়েছে) ---
   const healthServices = [
-    { title: "হ্যালো ডাক্তার", category: "ডাক্তার ও পরামর্শ", icon: <PhoneCall/>, desc: "২৪/৭ ঢাকা বা রংপুরের বিশেষজ্ঞ ডাক্তারের ভিডিও পরামর্শ।" },
-    { title: "ফ্রি হেলথ ক্যাম্প", category: "ডাক্তার ও পরামর্শ", icon: <Stethoscope/>, desc: "মাসে একদিন ডায়াবেটিস ও প্রেশার মাপার ক্যাম্প।" },
+    { title: "হ্যালো ডাক্তার", category: "ডাক্তার ও পরামর্শ", icon: <PhoneCall size={28}/>, desc: "২৪/৭ ঢাকা বা রংপুরের বিশেষজ্ঞ ডাক্তারের ভিডিও পরামর্শ।" },
+    { title: "ফ্রি হেলথ ক্যাম্প", category: "ডাক্তার ও পরামর্শ", icon: <Stethoscope size={28}/>, desc: "মাসে একদিন ডায়াবেটিস ও প্রেশার মাপার ক্যাম্প।" },
     
-    { title: "অ্যাম্বুলেন্স সেবা", category: "জরুরি সেবা", icon: <Ambulance/>, desc: "জরুরি প্রয়োজনে সড়ক বা নৌ-পথে রোগী পরিবহন।" },
-    { title: "অক্সিজেন ব্যাংক", category: "জরুরি সেবা", icon: <Activity/>, desc: "শ্বাসকষ্টের রোগীদের জন্য বিনামূল্যে অক্সিজেন সিলিন্ডার।" },
-    { title: "ব্লাড ডোনেশন ক্লাব", category: "জরুরি সেবা", icon: <HeartHandshake/>, desc: "জরুরি রক্তের প্রয়োজনে ডোনার ম্যানেজ করে দেওয়া।" },
+    { title: "অ্যাম্বুলেন্স সেবা", category: "জরুরি সেবা", icon: <Ambulance size={28}/>, desc: "জরুরি প্রয়োজনে সড়ক বা নৌ-পথে রোগী পরিবহন।" },
+    { title: "অক্সিজেন ব্যাংক", category: "জরুরি সেবা", icon: <Activity size={28}/>, desc: "শ্বাসকষ্টের রোগীদের জন্য বিনামূল্যে অক্সিজেন সিলিন্ডার।" },
+    { title: "ব্লাড ডোনেশন ক্লাব", category: "জরুরি সেবা", icon: <HeartHandshake size={28}/>, desc: "জরুরি রক্তের প্রয়োজনে ডোনার ম্যানেজ করে দেওয়া।" },
 
-    { title: "ঔষধ হোম ডেলিভারি", category: "ঔষধ ও টেস্ট", icon: <Pill/>, desc: "চুক্তিবদ্ধ ফার্মেসি থেকে ১০-১৫% ছাড়ে ঔষধ অর্ডার।" },
-    { title: "প্যাথলজি ডিসকাউন্ট", category: "ঔষধ ও টেস্ট", icon: <Microscope/>, desc: "ডায়াগনস্টিক টেস্টে মেম্বারদের জন্য ৩০-৪০% ছাড়।" },
+    { title: "ঔষধ হোম ডেলিভারি", category: "ঔষধ ও টেস্ট", icon: <Pill size={28}/>, desc: "চুক্তিবদ্ধ ফার্মেসি থেকে ১০-১৫% ছাড়ে ঔষধ অর্ডার।" },
+    { title: "প্যাথলজি ডিসকাউন্ট", category: "ঔষধ ও টেস্ট", icon: <Microscope size={28}/>, desc: "ডায়াগনস্টিক টেস্টে মেম্বারদের জন্য ৩০-৪০% ছাড়।" },
 
-    { title: "মা ও শিশু যত্ন", category: "মা ও শিশু", icon: <Baby/>, desc: "গর্ভবতী মায়েদের চেকআপ ও নবজাতকের পুষ্টি নিশ্চিতকরণ।" },
+    { title: "মা ও শিশু যত্ন", category: "মা ও শিশু", icon: <Baby size={28}/>, desc: "গর্ভবতী মায়েদের চেকআপ ও নবজাতকের পুষ্টি নিশ্চিতকরণ।" },
   ];
 
   // ফিল্টার লজিক
@@ -74,7 +74,6 @@ export default function HealthPublicPage() {
 
       {/* --- HERO SECTION --- */}
       <div className="relative bg-gradient-to-br from-rose-700 via-rose-600 to-pink-600 text-white py-24 md:py-32 overflow-hidden">
-        {/* Background Decor */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-full h-24 bg-slate-50 clip-path-slant"></div>
 
@@ -102,7 +101,7 @@ export default function HealthPublicPage() {
       {/* --- TABS & GRID SECTION --- */}
       <div className="container mx-auto px-4 py-16 -mt-20 relative z-20">
         
-        {/* Tabs (Scrollable) */}
+        {/* Tabs */}
         <div className="flex justify-center mb-10">
           <div className="flex gap-2 overflow-x-auto pb-4 custom-scrollbar bg-white/90 p-2 rounded-full shadow-lg backdrop-blur-md max-w-full">
             {categories.map((cat, idx) => (
@@ -132,7 +131,8 @@ export default function HealthPublicPage() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className={`w-14 h-14 ${style.bg} ${style.iconText} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    {React.cloneElement(item.icon as React.ReactElement, { size: 28 })}
+                    {/* এখানে React.cloneElement বাদ দেওয়া হয়েছে */}
+                    {item.icon}
                   </div>
                   <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.badge}`}>
                     {item.category}
@@ -171,36 +171,6 @@ export default function HealthPublicPage() {
             <a href="tel:017XXXXXXXX" className="bg-rose-600 text-white px-10 py-4 rounded-full font-bold text-xl hover:bg-rose-700 transition shadow-lg hover:shadow-rose-200 flex items-center gap-3">
               <PhoneCall size={24}/> ০১৭XX-XXXXXX
             </a>
-          </div>
-        </div>
-      </section>
-
-      {/* --- WHY CHOOSE US --- */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-slate-800 mb-12">কেন আমাদের স্বাস্থ্যসেবা?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition">
-              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <UserCheck size={32}/>
-              </div>
-              <h4 className="text-xl font-bold text-slate-800 mb-3">অভিজ্ঞ ডাক্তার</h4>
-              <p className="text-slate-500">ঢাকা ও রংপুরের স্বনামধন্য হাসপাতালের এমবিবিএস ডাক্তারদের পরামর্শ।</p>
-            </div>
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition">
-              <div className="w-16 h-16 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Pill size={32}/>
-              </div>
-              <h4 className="text-xl font-bold text-slate-800 mb-3">সাশ্রয়ী মূল্য</h4>
-              <p className="text-slate-500">মেম্বারদের জন্য ঔষধ এবং প্যাথলজি টেস্টে বিশেষ ছাড়ের ব্যবস্থা।</p>
-            </div>
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition">
-              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <HeartPulse size={32}/>
-              </div>
-              <h4 className="text-xl font-bold text-slate-800 mb-3">দ্রুত সেবা</h4>
-              <p className="text-slate-500">যেকোনো জরুরি মুহূর্তে অ্যাম্বুলেন্স ও অক্সিজেন সাপোর্ট।</p>
-            </div>
           </div>
         </div>
       </section>
