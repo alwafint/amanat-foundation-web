@@ -52,19 +52,19 @@ export default function HealthPage() {
     }
   };
 
-  // --- স্বাস্থ্য সেবার তালিকা ---
+  // --- স্বাস্থ্য সেবার তালিকা (আইকনে সাইজ যুক্ত করা হয়েছে) ---
   const healthServices = [
-    { title: "হ্যালো ডাক্তার", category: "ডাক্তার ও পরামর্শ", icon: <PhoneCall/>, desc: "২৪/৭ ঢাকা বা রংপুরের বিশেষজ্ঞ ডাক্তারের ভিডিও পরামর্শ।" },
-    { title: "ফ্রি হেলথ ক্যাম্প", category: "ডাক্তার ও পরামর্শ", icon: <Stethoscope/>, desc: "মাসে একদিন ডায়াবেটিস ও প্রেশার মাপার ক্যাম্প।" },
+    { title: "হ্যালো ডাক্তার", category: "ডাক্তার ও পরামর্শ", icon: <PhoneCall size={28}/>, desc: "২৪/৭ ঢাকা বা রংপুরের বিশেষজ্ঞ ডাক্তারের ভিডিও পরামর্শ।" },
+    { title: "ফ্রি হেলথ ক্যাম্প", category: "ডাক্তার ও পরামর্শ", icon: <Stethoscope size={28}/>, desc: "মাসে একদিন ডায়াবেটিস ও প্রেশার মাপার ক্যাম্প।" },
     
-    { title: "অ্যাম্বুলেন্স সেবা", category: "জরুরি সেবা", icon: <Ambulance/>, desc: "জরুরি প্রয়োজনে সড়ক বা নৌ-পথে রোগী পরিবহন।" },
-    { title: "অক্সিজেন ব্যাংক", category: "জরুরি সেবা", icon: <Activity/>, desc: "শ্বাসকষ্টের রোগীদের জন্য বিনামূল্যে অক্সিজেন সিলিন্ডার।" },
-    { title: "ব্লাড ডোনেশন ক্লাব", category: "জরুরি সেবা", icon: <HeartHandshake/>, desc: "জরুরি রক্তের প্রয়োজনে ডোনার ম্যানেজ করে দেওয়া।" },
+    { title: "অ্যাম্বুলেন্স সেবা", category: "জরুরি সেবা", icon: <Ambulance size={28}/>, desc: "জরুরি প্রয়োজনে সড়ক বা নৌ-পথে রোগী পরিবহন।" },
+    { title: "অক্সিজেন ব্যাংক", category: "জরুরি সেবা", icon: <Activity size={28}/>, desc: "শ্বাসকষ্টের রোগীদের জন্য বিনামূল্যে অক্সিজেন সিলিন্ডার।" },
+    { title: "ব্লাড ডোনেশন ক্লাব", category: "জরুরি সেবা", icon: <HeartHandshake size={28}/>, desc: "জরুরি রক্তের প্রয়োজনে ডোনার ম্যানেজ করে দেওয়া।" },
 
-    { title: "ঔষধ হোম ডেলিভারি", category: "ঔষধ ও টেস্ট", icon: <Pill/>, desc: "চুক্তিবদ্ধ ফার্মেসি থেকে ১০-১৫% ছাড়ে ঔষধ অর্ডার।" },
-    { title: "প্যাথলজি ডিসকাউন্ট", category: "ঔষধ ও টেস্ট", icon: <Microscope/>, desc: "ডায়াগনস্টিক টেস্টে মেম্বারদের জন্য ৩০-৪০% ছাড়।" },
+    { title: "ঔষধ হোম ডেলিভারি", category: "ঔষধ ও টেস্ট", icon: <Pill size={28}/>, desc: "চুক্তিবদ্ধ ফার্মেসি থেকে ১০-১৫% ছাড়ে ঔষধ অর্ডার।" },
+    { title: "প্যাথলজি ডিসকাউন্ট", category: "ঔষধ ও টেস্ট", icon: <Microscope size={28}/>, desc: "ডায়াগনস্টিক টেস্টে মেম্বারদের জন্য ৩০-৪০% ছাড়।" },
 
-    { title: "মা ও শিশু যত্ন", category: "মা ও শিশু", icon: <Baby/>, desc: "গর্ভবতী মায়েদের চেকআপ ও নবজাতকের পুষ্টি নিশ্চিতকরণ।" },
+    { title: "মা ও শিশু যত্ন", category: "মা ও শিশু", icon: <Baby size={28}/>, desc: "গর্ভবতী মায়েদের চেকআপ ও নবজাতকের পুষ্টি নিশ্চিতকরণ।" },
   ];
 
   const filteredItems = activeTab === 'All' ? healthServices : healthServices.filter(item => item.category === activeTab);
@@ -97,7 +97,7 @@ export default function HealthPage() {
       
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-rose-600 to-pink-500 rounded-3xl p-8 text-white mb-10 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 translate-x-1/2"></div>
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-extrabold mb-3">স্বাস্থ্য সুরক্ষা সেবা</h1>
           <p className="text-rose-100 max-w-2xl">
@@ -132,7 +132,7 @@ export default function HealthPage() {
               
               <div className="flex justify-between items-start mb-4">
                 <div className={`w-14 h-14 ${style.bg} ${style.iconText} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 28 })}
+                  {item.icon} {/* ফিক্সড: সরাসরি আইকন ব্যবহার */}
                 </div>
                 <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.badge}`}>
                   {item.category}
