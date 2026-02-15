@@ -8,9 +8,9 @@ import {
   MonitorPlay, Wrench, ArrowRight, Phone 
 } from "lucide-react";
 
-// ৪ ধাপ পেছনে যেতে হবে
-import Navbar from '../../../../components/layout/Navbar';
-import SiteFooter from '../../../../components/layout/SiteFooter';
+// ৩ ধাপ পেছনে গিয়ে কম্পোনেন্ট ইমপোর্ট
+import Navbar from '../../../components/layout/Navbar';
+import SiteFooter from '../../../components/layout/SiteFooter';
 
 export default function EducationPublicPage() {
   const [activeTab, setActiveTab] = useState('All');
