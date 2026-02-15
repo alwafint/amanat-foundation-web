@@ -18,7 +18,7 @@ export default function DigitalServicePublicPage() {
   // --- ক্যাটাগরি ---
   const categories = ["All", "নাগরিক সেবা", "ভূমি সেবা", "বিল ও পেমেন্ট", "ছাত্র ও চাকরি"];
 
-  // --- কালার স্টাইল জেনারেটর (ড্যাশবোর্ডের মতো) ---
+  // --- কালার স্টাইল জেনারেটর ---
   const getStyle = (category: string) => {
     switch (category) {
       case "নাগরিক সেবা":
@@ -48,27 +48,27 @@ export default function DigitalServicePublicPage() {
     }
   };
 
-  // --- ডিজিটাল সেবার তালিকা ---
+  // --- ডিজিটাল সেবার তালিকা (আইকনে সাইজ যুক্ত করা হয়েছে) ---
   const services = [
     // ১. নাগরিক সেবা
-    { title: "জন্ম/মৃত্যু নিবন্ধন", category: "নাগরিক সেবা", icon: <FileText/>, desc: "নতুন নিবন্ধন আবেদন বা সংশোধনের কাজ।" },
-    { title: "NID সংশোধন/হারানো", category: "নাগরিক সেবা", icon: <ShieldCheck/>, desc: "ভোটার আইডি কার্ড সংশোধন বা রি-ইস্যু আবেদন।" },
-    { title: "পাসপোর্ট আবেদন", category: "নাগরিক সেবা", icon: <Globe/>, desc: "ই-পাসপোর্টের ফরম পূরণ ও ব্যাংক ড্রাফট।" },
+    { title: "জন্ম/মৃত্যু নিবন্ধন", category: "নাগরিক সেবা", icon: <FileText size={28}/>, desc: "নতুন নিবন্ধন আবেদন বা সংশোধনের কাজ।" },
+    { title: "NID সংশোধন/হারানো", category: "নাগরিক সেবা", icon: <ShieldCheck size={28}/>, desc: "ভোটার আইডি কার্ড সংশোধন বা রি-ইস্যু আবেদন।" },
+    { title: "পাসপোর্ট আবেদন", category: "নাগরিক সেবা", icon: <Globe size={28}/>, desc: "ই-পাসপোর্টের ফরম পূরণ ও ব্যাংক ড্রাফট।" },
     
     // ২. ভূমি সেবা
-    { title: "ই-পর্চা / খতিয়ান", category: "ভূমি সেবা", icon: <Map/>, desc: "অনলাইনে জমির খতিয়ান বা পর্চা তোলা।" },
-    { title: "ভূমি উন্নয়ন কর", category: "ভূমি সেবা", icon: <CreditCard/>, desc: "অনলাইনে জমির খাজনা বা কর পরিশোধ।" },
-    { title: "নামজারি আবেদন", category: "ভূমি সেবা", icon: <FileText/>, desc: "জমির মালিকানা পরিবর্তনের মিউটেশন আবেদন।" },
+    { title: "ই-পর্চা / খতিয়ান", category: "ভূমি সেবা", icon: <Map size={28}/>, desc: "অনলাইনে জমির খতিয়ান বা পর্চা তোলা।" },
+    { title: "ভূমি উন্নয়ন কর", category: "ভূমি সেবা", icon: <CreditCard size={28}/>, desc: "অনলাইনে জমির খাজনা বা কর পরিশোধ।" },
+    { title: "নামজারি আবেদন", category: "ভূমি সেবা", icon: <FileText size={28}/>, desc: "জমির মালিকানা পরিবর্তনের মিউটেশন আবেদন।" },
 
     // ৩. বিল ও পেমেন্ট
-    { title: "পল্লী বিদ্যুৎ বিল", category: "বিল ও পেমেন্ট", icon: <Wifi/>, desc: "পোস্টপেইড বিল দেওয়া বা প্রিপেইড মিটার রিচার্জ।" },
-    { title: "গ্যাস ও পানি বিল", category: "বিল ও পেমেন্ট", icon: <CreditCard/>, desc: "লাইনের গ্যাস বা ওয়াসার বিল পরিশোধ।" },
+    { title: "পল্লী বিদ্যুৎ বিল", category: "বিল ও পেমেন্ট", icon: <Wifi size={28}/>, desc: "পোস্টপেইড বিল দেওয়া বা প্রিপেইড মিটার রিচার্জ।" },
+    { title: "গ্যাস ও পানি বিল", category: "বিল ও পেমেন্ট", icon: <CreditCard size={28}/>, desc: "লাইনের গ্যাস বা ওয়াসার বিল পরিশোধ।" },
     
     // ৪. ছাত্র ও চাকরি
-    { title: "চাকরির আবেদন", category: "ছাত্র ও চাকরি", icon: <Briefcase/>, desc: "সরকারি বা বেসরকারি চাকরির অনলাইন আবেদন।" },
-    { title: "সিভি (CV) তৈরি", category: "ছাত্র ও চাকরি", icon: <Printer/>, desc: "প্রফেশনাল বায়োডাটা বা সিভি তৈরি।" },
-    { title: "ভর্তি ফরম পূরণ", category: "ছাত্র ও চাকরি", icon: <Globe/>, desc: "স্কুল, কলেজ বা বিশ্ববিদ্যালয়ে ভর্তির আবেদন।" },
-    { title: "রেজাল্ট দেখা", category: "ছাত্র ও চাকরি", icon: <FileText/>, desc: "বোর্ড বা চাকরির পরীক্ষার ফলাফল প্রিন্ট।" },
+    { title: "চাকরির আবেদন", category: "ছাত্র ও চাকরি", icon: <Briefcase size={28}/>, desc: "সরকারি বা বেসরকারি চাকরির অনলাইন আবেদন।" },
+    { title: "সিভি (CV) তৈরি", category: "ছাত্র ও চাকরি", icon: <Printer size={28}/>, desc: "প্রফেশনাল বায়োডাটা বা সিভি তৈরি।" },
+    { title: "ভর্তি ফরম পূরণ", category: "ছাত্র ও চাকরি", icon: <Globe size={28}/>, desc: "স্কুল, কলেজ বা বিশ্ববিদ্যালয়ে ভর্তির আবেদন।" },
+    { title: "রেজাল্ট দেখা", category: "ছাত্র ও চাকরি", icon: <FileText size={28}/>, desc: "বোর্ড বা চাকরির পরীক্ষার ফলাফল প্রিন্ট।" },
   ];
 
   // ফিল্টার লজিক
@@ -140,7 +140,7 @@ export default function DigitalServicePublicPage() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className={`w-14 h-14 ${style.bg} ${style.iconText} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    {React.cloneElement(item.icon as React.ReactElement, { size: 28 })}
+                    {item.icon} {/* ফিক্সড: সরাসরি আইকন ব্যবহার */}
                   </div>
                   <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.badge}`}>
                     {item.category}
