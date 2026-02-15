@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Laptop, Smartphone, Scissors, Zap, 
   Sprout, Fish, Milk, PenTool, 
   MonitorPlay, Wrench, X, CheckCircle2, ArrowRight 
 } from "lucide-react";
-import { supabase } from '../../../../lib/supabaseClient';
+// আপনার ফোল্ডার স্ট্রাকচার অনুযায়ী পাথ ঠিক রাখুন
+import { supabase } from '../../../lib/supabaseClient'; 
 
 export default function TrainingPage() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,24 +38,17 @@ export default function TrainingPage() {
 
   // --- প্রশিক্ষণের তালিকা (বিনিয়োগের সাথে সামঞ্জস্যপূর্ণ) ---
   const trainingItems = [
-    // ১. আইটি ও ফ্রিল্যান্সিং (বিনিয়োগ: কম্পিউটার ল্যাব, ফ্রিল্যান্সিং গিয়ার)
-    { title: "কম্পিউটার অফিস অ্যাপ্লিকেশন", category: "আইটি ও ফ্রিল্যান্সিং", icon: <Laptop/>, duration: "৩ মাস", desc: "বেসিক কম্পিউটার, টাইপিং এবং অফিস ম্যানেজমেন্ট।" },
-    { title: "গ্রাফিক্স ডিজাইন ও ফ্রিল্যান্সিং", category: "আইটি ও ফ্রিল্যান্সিং", icon: <PenTool/>, duration: "৬ মাস", desc: "লোগো, ব্যানার ডিজাইন এবং অনলাইন মার্কেটপ্লেস গাইডলাইন।" },
-    { title: "ডিজিটাল মার্কেটিং", category: "আইটি ও ফ্রিল্যান্সিং", icon: <MonitorPlay/>, duration: "৩ মাস", desc: "ফেসবুক বুস্টিং, ইউটিউব মার্কেটিং এবং কন্টেন্ট ক্রিয়েশন।" },
-
-    // ২. কারিগরি দক্ষতা (বিনিয়োগ: মোবাইল ল্যাব, ইলেকট্রনিক্স শপ, অটো)
-    { title: "মোবাইল সার্ভিসিং ও রিপেয়ার", category: "কারিগরি দক্ষতা", icon: <Smartphone/>, duration: "৩ মাস", desc: "মোবাইল হার্ডওয়্যার ও সফটওয়্যার মেরামতের পূর্ণাঙ্গ কোর্স।" },
-    { title: "ইলেকট্রিক্যাল হাউজ ওয়্যারিং", category: "কারিগরি দক্ষতা", icon: <Zap/>, duration: "৩ মাস", desc: "বাসাবাড়ির বিদ্যুৎ সংযোগ ও ফ্যান-লাইট মেরামতের কাজ।" },
-    { title: "অটো মেকানিক্স ও ড্রাইভিং", category: "কারিগরি দক্ষতা", icon: <Wrench/>, duration: "২ মাস", desc: "অটো রিক্সা মেরামত এবং চালনা প্রশিক্ষণ।" },
-
-    // ৩. কৃষি ও খামার (বিনিয়োগ: গরু মোটাতাজাকরণ, মাছ চাষ, ছাগল পালন)
-    { title: "আধুনিক গবাদিপশু পালন", category: "কৃষি ও খামার", icon: <Milk/>, duration: "১ মাস", desc: "গরু মোটাতাজাকরণ এবং প্রাথমিক চিকিৎসা প্রশিক্ষণ।" },
-    { title: "বায়োফ্লক ও মাছ চাষ", category: "কৃষি ও খামার", icon: <Fish/>, duration: "১৫ দিন", desc: "আধুনিক পদ্ধতিতে অল্প জায়গায় মাছ চাষের কৌশল।" },
-    { title: "আধুনিক কৃষি ও বীজ প্রযুক্তি", category: "কৃষি ও খামার", icon: <Sprout/>, duration: "১ মাস", desc: "উন্নত ফলন, সার প্রয়োগ এবং বালাইনাশক ব্যবস্থাপনা।" },
-
-    // ৪. কুটির শিল্প (বিনিয়োগ: সেলাই মেশিন, হস্তশিল্প)
-    { title: "সেলাই ও দর্জি বিজ্ঞান", category: "কুটির শিল্প", icon: <Scissors/>, duration: "৩ মাস", desc: "কাটিং, সেলাই এবং পোশাক তৈরির হাতে-কলমে শিক্ষা।" },
-    { title: "হস্তশিল্প ও নকশিকাঁথা", category: "কুটির শিল্প", icon: <PenTool/>, duration: "২ মাস", desc: "শৌখিন পণ্য তৈরি এবং বাজারজাতকরণ।" },
+    { title: "কম্পিউটার অফিস অ্যাপ্লিকেশন", category: "আইটি ও ফ্রিল্যান্সিং", icon: <Laptop size={28}/>, duration: "৩ মাস", desc: "বেসিক কম্পিউটার, টাইপিং এবং অফিস ম্যানেজমেন্ট।" },
+    { title: "গ্রাফিক্স ডিজাইন ও ফ্রিল্যান্সিং", category: "আইটি ও ফ্রিল্যান্সিং", icon: <PenTool size={28}/>, duration: "৬ মাস", desc: "লোগো, ব্যানার ডিজাইন এবং অনলাইন মার্কেটপ্লেস গাইডলাইন।" },
+    { title: "ডিজিটাল মার্কেটিং", category: "আইটি ও ফ্রিল্যান্সিং", icon: <MonitorPlay size={28}/>, duration: "৩ মাস", desc: "ফেসবুক বুস্টিং, ইউটিউব মার্কেটিং এবং কন্টেন্ট ক্রিয়েশন।" },
+    { title: "মোবাইল সার্ভিসিং ও রিপেয়ার", category: "কারিগরি দক্ষতা", icon: <Smartphone size={28}/>, duration: "৩ মাস", desc: "মোবাইল হার্ডওয়্যার ও সফটওয়্যার মেরামতের পূর্ণাঙ্গ কোর্স।" },
+    { title: "ইলেকট্রিক্যাল হাউজ ওয়্যারিং", category: "কারিগরি দক্ষতা", icon: <Zap size={28}/>, duration: "৩ মাস", desc: "বাসাবাড়ির বিদ্যুৎ সংযোগ ও ফ্যান-লাইট মেরামতের কাজ।" },
+    { title: "অটো মেকানিক্স ও ড্রাইভিং", category: "কারিগরি দক্ষতা", icon: <Wrench size={28}/>, duration: "২ মাস", desc: "অটো রিক্সা মেরামত এবং চালনা প্রশিক্ষণ।" },
+    { title: "আধুনিক গবাদিপশু পালন", category: "কৃষি ও খামার", icon: <Milk size={28}/>, duration: "১ মাস", desc: "গরু মোটাতাজাকরণ এবং প্রাথমিক চিকিৎসা প্রশিক্ষণ।" },
+    { title: "বায়োফ্লক ও মাছ চাষ", category: "কৃষি ও খামার", icon: <Fish size={28}/>, duration: "১৫ দিন", desc: "আধুনিক পদ্ধতিতে অল্প জায়গায় মাছ চাষের কৌশল।" },
+    { title: "আধুনিক কৃষি ও বীজ প্রযুক্তি", category: "কৃষি ও খামার", icon: <Sprout size={28}/>, duration: "১ মাস", desc: "উন্নত ফলন, সার প্রয়োগ এবং বালাইনাশক ব্যবস্থাপনা।" },
+    { title: "সেলাই ও দর্জি বিজ্ঞান", category: "কুটির শিল্প", icon: <Scissors size={28}/>, duration: "৩ মাস", desc: "কাটিং, সেলাই এবং পোশাক তৈরির হাতে-কলমে শিক্ষা।" },
+    { title: "হস্তশিল্প ও নকশিকাঁথা", category: "কুটির শিল্প", icon: <PenTool size={28}/>, duration: "২ মাস", desc: "শৌখিন পণ্য তৈরি এবং বাজারজাতকরণ।" },
   ];
 
   const filteredItems = activeTab === 'All' ? trainingItems : trainingItems.filter(item => item.category === activeTab);
@@ -76,8 +70,8 @@ export default function TrainingPage() {
 
       if (error) throw error;
       alert("ভর্তির আবেদন জমা হয়েছে! আমরা শীঘ্রই যোগাযোগ করব।");
-      setModalOpen(false); setShift(''); setRemarks('');
-    } catch (err: any) { alert("সমস্যা হয়েছে: " + err.message); } 
+      setModalOpen(false);
+    } catch (err: any) { alert(err.message); } 
     finally { setLoading(false); }
   };
 
@@ -90,7 +84,7 @@ export default function TrainingPage() {
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-extrabold mb-3">কারিগরি প্রশিক্ষণ ও দক্ষতা</h1>
           <p className="text-purple-100 max-w-2xl">
-            শুধু লোন নয়, আমরা দিচ্ছি দক্ষ হওয়ার সুযোগ। নিজের পায়ে দাঁড়াতে প্রয়োজনীয় প্রশিক্ষণ নিন এবং স্বাবলম্বী হোন।
+            নিজের পায়ে দাঁড়াতে প্রয়োজনীয় প্রশিক্ষণ নিন এবং স্বাবলম্বী হোন।
           </p>
         </div>
       </div>
@@ -98,15 +92,7 @@ export default function TrainingPage() {
       {/* Tabs */}
       <div className="flex gap-3 overflow-x-auto pb-4 mb-4 custom-scrollbar px-1">
         {categories.map((cat, idx) => (
-          <button
-            key={idx}
-            onClick={() => setActiveTab(cat)}
-            className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold transition-all ${
-              activeTab === cat 
-                ? 'bg-slate-800 text-white shadow-lg' 
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-            }`}
-          >
+          <button key={idx} onClick={() => setActiveTab(cat)} className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold transition-all ${activeTab === cat ? 'bg-slate-800 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`}>
             {cat}
           </button>
         ))}
@@ -121,7 +107,7 @@ export default function TrainingPage() {
               
               <div className="flex justify-between items-start mb-4">
                 <div className={`w-14 h-14 ${style.bg} ${style.iconText} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 28 })}
+                  {item.icon} {/* সংশোধিত অংশ: সরাসরি আইকন রেন্ডার করা হয়েছে */}
                 </div>
                 <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${style.badge}`}>
                   {item.duration}
@@ -144,9 +130,8 @@ export default function TrainingPage() {
 
       {/* Application Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-            
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center mb-6 pb-4 border-b">
               <div>
                 <h3 className="text-xl font-bold text-slate-800">{selectedCourse}</h3>
@@ -167,28 +152,12 @@ export default function TrainingPage() {
                   </div>
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">কোনো প্রশ্ন বা মন্তব্য?</label>
-                <textarea 
-                  onChange={(e) => setRemarks(e.target.value)} 
-                  className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-purple-500 h-24" 
-                  placeholder="আপনার কিছু জানার থাকলে লিখুন..." 
-                />
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">মন্তব্য</label>
+                <textarea onChange={(e) => setRemarks(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-purple-500 h-24" placeholder="আপনার কিছু জানার থাকলে লিখুন..." />
               </div>
-
-              <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 text-xs text-purple-800 flex gap-3 items-start">
-                <CheckCircle2 size={18} className="shrink-0 text-purple-600"/> 
-                <span>
-                  আসন সংখ্যা সীমিত। আবেদন করার পর আমাদের অফিস থেকে ফোন করে আপনার ভর্তি নিশ্চিত করা হবে।
-                </span>
-              </div>
-
-              <button 
-                disabled={loading} 
-                className="w-full bg-purple-700 text-white py-3.5 rounded-xl font-bold hover:bg-purple-800 transition shadow-lg disabled:opacity-70"
-              >
-                {loading ? 'প্রসেসিং হচ্ছে...' : 'আবেদন জমা দিন'}
+              <button disabled={loading} className="w-full bg-purple-700 text-white py-3.5 rounded-xl font-bold hover:bg-purple-800 transition shadow-lg disabled:opacity-70">
+                {loading ? 'প্রসেসিং...' : 'আবেদন জমা দিন'}
               </button>
             </form>
           </div>
