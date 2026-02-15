@@ -23,7 +23,7 @@ export default function InvestmentPage() {
   // ক্যাটাগরি লিস্ট
   const categories = ["All", "কৃষি ও খামার", "ক্ষুদ্র ব্যবসা", "যানবাহন", "প্রযুক্তি ও দক্ষতা", "গৃহ ও অন্যান্য"];
 
-  // --- স্টাইল জেনারেটর ফাংশন (কার্ডের ভিন্নতার জন্য) ---
+  // --- স্টাইল জেনারেটর ফাংশন ---
   const getCategoryStyle = (category: string) => {
     switch (category) {
       case "কৃষি ও খামার":
@@ -64,23 +64,23 @@ export default function InvestmentPage() {
     }
   };
 
-  // --- ডাটাবেজ ---
+  // --- ডাটাবেজ (আইকনে সাইজ যোগ করা হয়েছে) ---
   const investmentItems = [
-    { title: "হাঁস-মুরগি ও ছাগল পালন", category: "কৃষি ও খামার", icon: <Sprout/>, desc: "পারিবারিক পর্যায়ে পালনের জন্য স্বল্প পুঁজি।" },
-    { title: "মুদি দোকান সম্প্রসারণ", category: "ক্ষুদ্র ব্যবসা", icon: <Store/>, desc: "দোকানে মাল তোলার জন্য পণ্য-ভিত্তিক পুঁজি।" },
-    { title: "অটো ভ্যান বা রিক্সা", category: "যানবাহন", icon: <Car/>, desc: "পণ্য বা যাত্রী পরিবহনের বাহন ক্রয়।" },
-    { title: "কম্পিউটার ও আইটি সেন্টার", category: "প্রযুক্তি ও দক্ষতা", icon: <Laptop/>, desc: "কম্পিউটার টাইপ, প্রিন্ট ও ইন্টারনেট সেবা।" },
-    { title: "টিনের ঘর তৈরি", category: "গৃহ ও অন্যান্য", icon: <Home/>, desc: "বসতঘর নির্মাণ বা মেরামতের সামগ্রী।" },
-    { title: "দুগ্ধ খামার / গাভী পালন", category: "কৃষি ও খামার", icon: <Milk/>, desc: "উন্নত জাতের গাভী ক্রয় ও লালন-পালন।" },
-    { title: "ফেরিওয়ালা বা হকার", category: "ক্ষুদ্র ব্যবসা", icon: <ShoppingBag/>, desc: "ভ্যানে বা পায়ে হেঁটে পণ্য বিক্রির মালামাল।" },
-    { title: "ইলেকট্রিক অটো/ইজি বাইক", category: "যানবাহন", icon: <Car/>, desc: "ব্যাটারি চালিত ইজি বাইক ক্রয়ের সুবিধা।" },
-    { title: "মোবাইল সার্ভিসিং ল্যাব", category: "প্রযুক্তি ও দক্ষতা", icon: <Smartphone/>, desc: "মোবাইল মেরামতের আধুনিক যন্ত্রপাতি।" },
-    { title: "স্যানিটেশন ও টিউবওয়েল", category: "গৃহ ও অন্যান্য", icon: <Hammer/>, desc: "স্বাস্থ্যসম্মত ল্যাট্রিন ও বিশুদ্ধ পানি।" },
-    { title: "মাছ চাষ প্রজেক্ট", category: "কৃষি ও খামার", icon: <Fish/>, desc: "পুকুর বা বায়োফ্লক পদ্ধতিতে মাছ চাষ।" },
-    { title: "মিনি গার্মেন্টস/সেলাই", category: "ক্ষুদ্র ব্যবসা", icon: <Shirt/>, desc: "সেলাই মেশিন বা ছোট গার্মেন্টস মেশিনারি।" },
-    { title: "ফসল স্টক ব্যবসা", category: "কৃষি ও খামার", icon: <Landmark/>, desc: "সিজনে ফসল কিনে স্টক করার বড় পুঁজি।" },
-    { title: "ফ্রিল্যান্সিং গিয়ার", category: "প্রযুক্তি ও দক্ষতা", icon: <Laptop/>, desc: "ফ্রিল্যান্সিংয়ের জন্য হাই-কনফিগারেশন পিসি।" },
-    { title: "রাইড শেয়ারিং বাইক", category: "যানবাহন", icon: <Car/>, desc: "ভাড়ায় বা রাইড শেয়ারিংয়ে বাইক চালানো।" },
+    { title: "হাঁস-মুরগি ও ছাগল পালন", category: "কৃষি ও খামার", icon: <Sprout size={28}/>, desc: "পারিবারিক পর্যায়ে পালনের জন্য স্বল্প পুঁজি।" },
+    { title: "মুদি দোকান সম্প্রসারণ", category: "ক্ষুদ্র ব্যবসা", icon: <Store size={28}/>, desc: "দোকানে মাল তোলার জন্য পণ্য-ভিত্তিক পুঁজি।" },
+    { title: "অটো ভ্যান বা রিক্সা", category: "যানবাহন", icon: <Car size={28}/>, desc: "পণ্য বা যাত্রী পরিবহনের বাহন ক্রয়।" },
+    { title: "কম্পিউটার ও আইটি সেন্টার", category: "প্রযুক্তি ও দক্ষতা", icon: <Laptop size={28}/>, desc: "কম্পিউটার টাইপ, প্রিন্ট ও ইন্টারনেট সেবা।" },
+    { title: "টিনের ঘর তৈরি", category: "গৃহ ও অন্যান্য", icon: <Home size={28}/>, desc: "বসতঘর নির্মাণ বা মেরামতের সামগ্রী।" },
+    { title: "দুগ্ধ খামার / গাভী পালন", category: "কৃষি ও খামার", icon: <Milk size={28}/>, desc: "উন্নত জাতের গাভী ক্রয় ও লালন-পালন।" },
+    { title: "ফেরিওয়ালা বা হকার", category: "ক্ষুদ্র ব্যবসা", icon: <ShoppingBag size={28}/>, desc: "ভ্যানে বা পায়ে হেঁটে পণ্য বিক্রির মালামাল।" },
+    { title: "ইলেকট্রিক অটো/ইজি বাইক", category: "যানবাহন", icon: <Car size={28}/>, desc: "ব্যাটারি চালিত ইজি বাইক ক্রয়ের সুবিধা।" },
+    { title: "মোবাইল সার্ভিসিং ল্যাব", category: "প্রযুক্তি ও দক্ষতা", icon: <Smartphone size={28}/>, desc: "মোবাইল মেরামতের আধুনিক যন্ত্রপাতি।" },
+    { title: "স্যানিটেশন ও টিউবওয়েল", category: "গৃহ ও অন্যান্য", icon: <Hammer size={28}/>, desc: "স্বাস্থ্যসম্মত ল্যাট্রিন ও বিশুদ্ধ পানি।" },
+    { title: "মাছ চাষ প্রজেক্ট", category: "কৃষি ও খামার", icon: <Fish size={28}/>, desc: "পুকুর বা বায়োফ্লক পদ্ধতিতে মাছ চাষ।" },
+    { title: "মিনি গার্মেন্টস/সেলাই", category: "ক্ষুদ্র ব্যবসা", icon: <Shirt size={28}/>, desc: "সেলাই মেশিন বা ছোট গার্মেন্টস মেশিনারি।" },
+    { title: "ফসল স্টক ব্যবসা", category: "কৃষি ও খামার", icon: <Landmark size={28}/>, desc: "সিজনে ফসল কিনে স্টক করার বড় পুঁজি।" },
+    { title: "ফ্রিল্যান্সিং গিয়ার", category: "প্রযুক্তি ও দক্ষতা", icon: <Laptop size={28}/>, desc: "ফ্রিল্যান্সিংয়ের জন্য হাই-কনফিগারেশন পিসি।" },
+    { title: "রাইড শেয়ারিং বাইক", category: "যানবাহন", icon: <Car size={28}/>, desc: "ভাড়ায় বা রাইড শেয়ারিংয়ে বাইক চালানো।" },
   ];
 
   const filteredItems = activeTab === 'All' ? investmentItems : investmentItems.filter(item => item.category === activeTab);
@@ -155,7 +155,7 @@ export default function InvestmentPage() {
               {/* Header: Icon & Badge */}
               <div className="flex justify-between items-start mb-5 relative z-10">
                 <div className={`w-14 h-14 ${style.iconBg} ${style.iconColor} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300`}>
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 28 })}
+                  {item.icon} {/* ফিক্সড: সরাসরি আইকন ব্যবহার করা হয়েছে */}
                 </div>
                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${style.badge}`}>
                   {item.category}
