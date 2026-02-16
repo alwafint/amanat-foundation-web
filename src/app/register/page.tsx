@@ -2,242 +2,178 @@
 
 import React, { useState } from 'react';
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import { 
-  User, 
-  Phone, 
-  CreditCard, 
-  MapPin, 
-  Lock, 
-  ArrowRight, 
-  ShieldCheck, 
-  Briefcase,
-  Users,
-  Eye,
-  EyeOff,
-  Upload,      // আপলোড আইকন
-  Image as ImageIcon,
-  FileText
+  User, Phone, MapPin, ArrowRight, ShieldCheck, 
+  Loader2, CheckCircle 
 } from "lucide-react";
+import { supabase } from '../../lib/supabaseClient';
+
+// গ্রামের তালিকা
+const saghataVillages = [
+  "চক দাতেয়া", "টেপা পদুমসহর", "কুকরাহাট", "ভাঙ্গামোড়", "গটীয়া", "চিথলিয়া", "সানকীভাঙ্গা", "উল্লা", "সাকোয়া", "মান্দুরা", 
+  "ডিমলা পদুমসহর", "দুর্গাপুর", "দলদলিয়া", "ময়মন্তপুর", "বাটী", "বোনারপাড়া", "কালপাণী", "তেলিয়ান", "শ্যামপুর", "বেলতৈল", 
+  "কুখাতাইড়", "চকচকিয়া", "ভরতখালী", "বাঁশহাটা", "পুটিমারী", "ধনারুহা", "খামার ধনারুহা", "মাজবাড়ী", "ধানঘরা", "পূর্ব অনন্তপুর", 
+  "যাদুরতাইড়", "মথরপাড়া", "উল্যা সোনাতলা", "হেলেঞ্চা", "বুরুঙ্গি", "গছাবাড়ী", "অনন্তপুর", "রামনগর", "কচুয়া", "পাঠানপাড়া", 
+  "চন্দনপাট", "ওচমানেরপাড়া", "বালুয়া", "বড়াইকান্দী", "ঝৈলতলা", "পাচিয়ারপুর", "বাউলিয়া", "পচাবস্তা", "ঘুরিদহ", "ঝাড়াবর্ষা", 
+  "যোগীপাড়া", "কচুয়াহাট", "সাথালিয়া", "সেঙ্গুয়া", "হাটবাড়ী", "হাসিলকান্দি", "সাঘাটা", "পবণতাইড়", "কমলপুর", "ভগবানপুর", 
+  "গোরেরপাড়া", "হাপানিয়া", "আগ গড়গড়িয়া", "পাছ গড়গড়িয়া", "নসিরারপাড়া", "সতীতলা", "কিঙ্করপুর", "বাঙ্গাবাড়ী", "চাকুলী", 
+  "জালাল তাইর", "গজারিয়া", "ফলিয়াদিগর", "কামালেরপাড়া", "বারকোনা", "সাহাবাজের পাড়া", "সুজালপুর", "ছিলমানেরপাড়া", 
+  "বাদিনারপাড়া", "থৈকরেরপাড়া", "বেঙ্গারপাড়া", "চিনিরপটল", "কালুরপাড়া", "কুমারপাড়া", "হলদিয়া", "গুয়াবাড়ী", "কানাইপাড়া", 
+  "বেড়া", "গোবিন্দপুর", "আমদিরপাড়া", "আবদুল্লারপাড়া", "শিমুলবাড়ী", "কৈচড়া", "মেছট", "বাজিতনগর", "শিমুলবাড়িয়া", 
+  "বলিয়ারবেড়", "কামারপাড়া", "বগারভিটা", "দৈচড়া", "জাঙ্গালিয়া", "জুমারবাড়ী", "চান্দপাড়া", "মামুদপুর", "বসন্তেরপাড়া", 
+  "কুন্দপাড়া", "কাঠুর", "নলছিয়া", "চেঙ্গালিয়া"
+].sort();
 
 export default function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    mobile: '',
+    district: 'গাইবান্ধা',
+    upazila: 'সাঘাটা',
+    village: ''
+  });
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.from('members').insert([{
+        ...formData,
+        password: '123', // ডিফল্ট পাসওয়ার্ড
+        role: 'member',
+        status: 'pending', // শুরুতে পেন্ডিং থাকবে, স্টাফ এপ্রুভ করবে
+        address: `${formData.village}, ${formData.upazila}, ${formData.district}`
+      }]);
+
+      if (error) throw error;
+
+      alert("রেজিস্ট্রেশন সফল হয়েছে! আপনার একাউন্ট যাচাইয়ের জন্য অপেক্ষা করুন।");
+      router.push('/login');
+
+    } catch (err: any) {
+      alert("সমস্যা হয়েছে: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 md:p-6 font-sans">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 md:p-6 font-sans">
       
-      {/* Main Card Container */}
-      <div className="bg-white w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden flex flex-col lg:flex-row border border-slate-100">
+      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-slate-100">
         
-        {/* Left Side - Branding (মোবাইলে হাইড থাকবে, বড় স্ক্রিনে দেখাবে) */}
-        <div className="hidden lg:flex w-2/5 bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-950 text-white p-12 flex-col justify-between relative overflow-hidden">
-          {/* Background Patterns */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-          
+        {/* Left Branding */}
+        <div className="hidden md:flex w-2/5 bg-emerald-900 p-10 flex-col justify-between relative overflow-hidden text-white">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
           <div className="relative z-10">
-            <Link href="/" className="flex items-center gap-3 mb-10 group w-fit">
-              <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-lg flex items-center justify-center text-white font-bold text-xl border border-white/20 group-hover:bg-white group-hover:text-emerald-900 transition duration-300">
-                A
-              </div>
-              <span className="text-2xl font-bold tracking-tight">আমানত ফাউন্ডেশন</span>
-            </Link>
-
-            <h2 className="text-4xl font-bold leading-tight mb-6">
-              আপনার সঞ্চয়, <br/> 
-              <span className="text-yellow-400">আমাদের আমানত।</span>
-            </h2>
-            <p className="text-emerald-100 text-lg leading-relaxed">
-              আজই মেম্বার হয়ে আমাদের পরিবারের সদস্য হোন। কৃষি, স্বাস্থ্য এবং আত্মকর্মসংস্থানে আমরা আছি আপনার পাশে।
-            </p>
+            <h1 className="text-3xl font-bold mb-2">আমানত ফাউন্ডেশন</h1>
+            <p className="text-emerald-200 text-sm">আপনার বিশ্বস্ত সহযোগী</p>
           </div>
-
-          <div className="relative z-10 space-y-4">
-             <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
-                <ShieldCheck className="text-yellow-400 w-8 h-8" />
-                <div>
-                   <h4 className="font-bold">১০০% স্বচ্ছতা</h4>
-                   <p className="text-xs text-emerald-200">ডিজিটাল ড্যাশবোর্ডের মাধ্যমে হিসাব দেখার সুবিধা</p>
-                </div>
-             </div>
+          <div className="space-y-4 relative z-10">
+            <div className="flex items-center gap-3">
+               <CheckCircle className="text-yellow-400" size={20}/>
+               <span className="text-sm">সহজ রেজিস্ট্রেশন</span>
+            </div>
+            <div className="flex items-center gap-3">
+               <CheckCircle className="text-yellow-400" size={20}/>
+               <span className="text-sm">দ্রুত সেবা</span>
+            </div>
+            <div className="flex items-center gap-3">
+               <CheckCircle className="text-yellow-400" size={20}/>
+               <span className="text-sm">নিরাপদ তথ্য</span>
+            </div>
           </div>
-
-          <div className="relative z-10 text-xs text-emerald-300 mt-8">
-            &copy; ২০২৪ আমানত ফাউন্ডেশন।
-          </div>
+          <p className="text-xs text-emerald-400 mt-8">&copy; ২০২৬ আমানত ফাউন্ডেশন</p>
         </div>
 
-        {/* Right Side - Registration Form */}
-        <div className="w-full lg:w-3/5 p-6 md:p-10 lg:p-14 overflow-y-auto max-h-screen">
-          <div className="max-w-2xl mx-auto">
-            
-            {/* Mobile Branding (শুধু মোবাইলে দেখাবে) */}
-            <div className="lg:hidden text-center mb-8">
-               <h2 className="text-2xl font-bold text-emerald-800 flex items-center justify-center gap-2">
-                 <ShieldCheck size={24}/> আমানত ফাউন্ডেশন
-               </h2>
-            </div>
-
-            <div className="text-center lg:text-left mb-8">
-               <h2 className="text-3xl font-bold text-slate-800 mb-2">মেম্বার রেজিস্ট্রেশন</h2>
-               <p className="text-slate-500">নিচের ফর্মে সঠিক তথ্য দিয়ে পূরণ করুন (<span className="text-red-500">*</span> চিহ্নযুক্ত ঘরগুলো বাধ্যতামূলক)</p>
-            </div>
-
-            <form className="space-y-6">
-              
-              {/* ১. ব্যক্তিগত তথ্য */}
-              <div className="space-y-5">
-                 <h3 className="text-sm font-bold text-emerald-700 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
-                   ব্যক্তিগত তথ্য
-                 </h3>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Name */}
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        আপনার নাম <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative group">
-                        <User className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                        <input type="text" required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none" placeholder="আপনার পুরো নাম" />
-                      </div>
-                    </div>
-                    {/* Phone */}
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        মোবাইল নম্বর <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative group">
-                        <Phone className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                        <input type="number" required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none" placeholder="017xxxxxxxx" />
-                      </div>
-                    </div>
-                 </div>
-
-                 {/* Profession & NID Number */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        পেশা <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative group">
-                        <Briefcase className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                        <select required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none text-slate-600 appearance-none">
-                          <option value="">পেশা নির্বাচন করুন</option>
-                          <option>কৃষক</option>
-                          <option>ব্যবসায়ী</option>
-                          <option>চাকুরীজীবী</option>
-                          <option>ছাত্র/ছাত্রী</option>
-                          <option>গৃহিণী</option>
-                          <option>প্রবাসী</option>
-                          <option>অন্যান্য</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        NID নম্বর <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative group">
-                        <CreditCard className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                        <input type="number" required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none" placeholder="জাতীয় পরিচয়পত্র নম্বর" />
-                      </div>
-                    </div>
-                 </div>
-
-                 {/* Address */}
-                 <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      বর্তমান ঠিকানা <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative group">
-                      <MapPin className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                      <textarea required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none" placeholder="গ্রাম, পোস্ট অফিস, থানা, জেলা..." rows={2}></textarea>
-                    </div>
-                 </div>
-              </div>
-
-              {/* ২. ডকুমেন্ট আপলোড (নতুন সেকশন) */}
-              <div className="space-y-5 pt-2">
-                 <h3 className="text-sm font-bold text-emerald-700 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
-                   ডকুমেন্ট আপলোড
-                 </h3>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Photo Upload */}
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                          আপনার ছবি <span className="text-red-500">*</span>
-                        </label>
-                        <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-emerald-500 hover:bg-emerald-50 transition cursor-pointer relative group">
-                            <input type="file" required accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                            <div className="flex flex-col items-center justify-center text-slate-500 group-hover:text-emerald-600">
-                                <ImageIcon size={32} className="mb-2" />
-                                <span className="text-sm font-medium">ছবি আপলোড করুন</span>
-                                <span className="text-xs text-slate-400 mt-1">(JPG, PNG - Max 2MB)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* NID Upload */}
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                          NID কার্ডের ছবি <span className="text-red-500">*</span>
-                        </label>
-                        <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-emerald-500 hover:bg-emerald-50 transition cursor-pointer relative group">
-                            <input type="file" required accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                            <div className="flex flex-col items-center justify-center text-slate-500 group-hover:text-emerald-600">
-                                <FileText size={32} className="mb-2" />
-                                <span className="text-sm font-medium">NID আপলোড করুন</span>
-                                <span className="text-xs text-slate-400 mt-1">(সামনের অংশ)</span>
-                            </div>
-                        </div>
-                    </div>
-                 </div>
-              </div>
-
-              {/* ৩. নিরাপত্তা */}
-              <div className="space-y-5 pt-2">
-                 <h3 className="text-sm font-bold text-emerald-700 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
-                   নিরাপত্তা
-                 </h3>
-                 
-                 <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      পাসওয়ার্ড দিন <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative group">
-                      <Lock className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                      <input 
-                        required
-                        type={showPassword ? "text" : "password"} 
-                        className="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none" 
-                        placeholder="কমপক্ষে ৬ সংখ্যার পাসওয়ার্ড" 
-                      />
-                      <button 
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3.5 text-slate-400 hover:text-emerald-600"
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                 </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="pt-6">
-                <button className="w-full bg-emerald-700 text-white py-4 rounded-xl font-bold text-lg hover:bg-emerald-800 transition shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 group transform active:scale-[0.99]">
-                  রেজিস্ট্রেশন সম্পন্ন করুন <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
-                </button>
-              </div>
-
-              {/* Login Link */}
-              <p className="text-center text-slate-500 mt-6">
-                আগেই অ্যাকাউন্ট আছে? <Link href="/login" className="text-emerald-700 font-bold hover:underline">লগইন করুন</Link>
-              </p>
-
-            </form>
+        {/* Right Form */}
+        <div className="w-full md:w-3/5 p-6 md:p-12">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-800">নতুন সদস্য হোন</h2>
+            <p className="text-slate-500 text-sm mt-1">মাত্র ১ মিনিটে রেজিস্ট্রেশন সম্পন্ন করুন</p>
           </div>
+
+          <form onSubmit={handleRegister} className="space-y-5">
+            
+            {/* নাম */}
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1.5">আপনার নাম</label>
+              <div className="relative group">
+                <User className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
+                <input 
+                  type="text" required 
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition" 
+                  placeholder="পুরো নাম লিখুন"
+                  onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* মোবাইল */}
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1.5">মোবাইল নম্বর</label>
+              <div className="relative group">
+                <Phone className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
+                <input 
+                  type="number" required 
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition" 
+                  placeholder="017xxxxxxxx"
+                  onChange={(e) => setFormData({...formData, mobile: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* ঠিকানা (ফিক্সড + ড্রপডাউন) */}
+            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-4">
+               <div className="flex items-center gap-2 mb-2 border-b border-emerald-200 pb-2">
+                 <MapPin size={18} className="text-emerald-600"/>
+                 <span className="text-sm font-bold text-emerald-800">ঠিকানা</span>
+               </div>
+               
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">জেলা</label>
+                    <input type="text" value="গাইবান্ধা" disabled className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">উপজেলা</label>
+                    <input type="text" value="সাঘাটা" disabled className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed" />
+                  </div>
+               </div>
+
+               <div>
+                 <label className="block text-xs font-bold text-slate-700 mb-1">গ্রাম নির্বাচন করুন <span className="text-red-500">*</span></label>
+                 <select 
+                   required 
+                   className="w-full p-3 bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-slate-700"
+                   onChange={(e) => setFormData({...formData, village: e.target.value})}
+                 >
+                   <option value="">তালিকায় ক্লিক করুন...</option>
+                   {saghataVillages.map((v, i) => (
+                     <option key={i} value={v}>{v}</option>
+                   ))}
+                 </select>
+               </div>
+            </div>
+
+            {/* Submit Button */}
+            <button 
+              disabled={loading}
+              className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-emerald-700 transition shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 active:scale-[0.98]"
+            >
+              {loading ? <Loader2 className="animate-spin"/> : "রেজিস্ট্রেশন করুন"} 
+              {!loading && <ArrowRight size={20} />}
+            </button>
+
+            <p className="text-center text-sm text-slate-500 mt-4">
+              আগেই অ্যাকাউন্ট আছে? <Link href="/login" className="text-emerald-600 font-bold hover:underline">লগইন করুন</Link>
+            </p>
+
+          </form>
         </div>
 
       </div>
