@@ -14,10 +14,10 @@ export default function StaffRequestPage() {
   const [searchQuery, setSearchQuery] = useState('');
   
   // ফিল্টার স্ট্যাটাস: 
-  // 'pending_staff' = নতুন রিকোয়েস্ট (যা স্টাফকে চেক করতে হবে)
+  // 'pending' = নতুন রিকোয়েস্ট (যা মেম্বার পাঠিয়েছে, স্টাফ দেখবে)
   // 'pending_management' = স্টাফ চেক করেছে, এখন এডমিনের কাছে আছে
   // 'approved' = সফলভাবে সম্পন্ন
-  const [filter, setFilter] = useState('pending_staff'); 
+  const [filter, setFilter] = useState('pending'); 
 
   useEffect(() => {
     const localUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -27,20 +27,20 @@ export default function StaffRequestPage() {
     if (localUser.mobile && localUser.role === 'staff') {
       fetchRequests(localUser.mobile, filter);
     } else {
-      setLoading(false); // স্টাফ না হলে লোডিং বন্ধ
+      setLoading(false);
     }
-  }, [filter]); // ফিল্টার চেঞ্জ হলে আবার ডাটা আনবে
+  }, [filter]);
 
   const fetchRequests = async (staffMobile: string, currentFilter: string) => {
     setLoading(true);
     
     try {
       // ১. বুকিং টেবিল থেকে ডাটা আনা
-      // ২. লজিক: staff_id == বর্তমান স্টাফের মোবাইল
+      // ২. লজিক: staff_id == বর্তমান স্টাফের মোবাইল (যাতে অন্য স্টাফের ডাটা না আসে)
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .eq('staff_id', staffMobile) 
+        .eq('staff_id', staffMobile) // এই লাইনটি নিশ্চিত করছে যে শুধু এই স্টাফের মেম্বারদের ডাটাই আসবে
         .eq('status', currentFilter)
         .order('created_at', { ascending: false });
 
@@ -62,7 +62,7 @@ export default function StaffRequestPage() {
         .from('bookings')
         .update({ 
           status: 'pending_management', // স্ট্যাটাস আপডেট
-          assigned_staff: user.full_name // স্টাফের নাম রেকর্ড হবে
+          assigned_staff: user.full_name // স্টাফের নাম রেকর্ড হবে (অপশনাল)
         })
         .eq('id', id);
 
@@ -93,8 +93,8 @@ export default function StaffRequestPage() {
 
   // সার্চ ফিল্টার (ক্লায়েন্ট সাইড)
   const filteredData = requests.filter(item => 
-    item.member_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item.mobile.includes(searchQuery)
+    (item.member_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.mobile?.includes(searchQuery))
   );
 
   return (
@@ -104,14 +104,14 @@ export default function StaffRequestPage() {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
         <div>
           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <ClipboardList className="text-emerald-600"/> রিকোয়েস্ট ম্যানেজমেন্ট
+            <ClipboardList className="text-emerald-600"/> সেবা রিকোয়েস্ট
           </h2>
           <p className="text-xs text-slate-500 mt-1">আপনার মেম্বারদের পাঠানো সকল আবেদন</p>
         </div>
         
         <div className="flex flex-wrap gap-2">
           {[
-            { id: 'pending_staff', label: 'আমার কাজ (New)', count: null },
+            { id: 'pending', label: 'নতুন আবেদন', count: null },
             { id: 'pending_management', label: 'অফিসে পাঠানো', count: null },
             { id: 'approved', label: 'সম্পন্ন', count: null },
             { id: 'rejected', label: 'বাতিল', count: null }
@@ -138,6 +138,7 @@ export default function StaffRequestPage() {
             type="text" 
             placeholder="মেম্বারের নাম বা মোবাইল নম্বর দিয়ে খুঁজুন..." 
             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 shadow-sm"
+            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
          />
       </div>
@@ -167,12 +168,12 @@ export default function StaffRequestPage() {
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                  req.status === 'pending_staff' ? 'bg-orange-100 text-orange-700' :
+                  req.status === 'pending' ? 'bg-orange-100 text-orange-700' :
                   req.status === 'pending_management' ? 'bg-blue-100 text-blue-700' :
                   req.status === 'rejected' ? 'bg-red-100 text-red-700' :
                   'bg-green-100 text-green-700'
                 }`}>
-                  {req.status === 'pending_staff' ? 'New Request' : req.status.replace('_', ' ')}
+                  {req.status === 'pending' ? 'New' : req.status.replace('_', ' ')}
                 </span>
               </div>
 
@@ -194,7 +195,7 @@ export default function StaffRequestPage() {
               </div>
 
               {/* অ্যাকশন বাটনসমূহ (শুধুমাত্র স্টাফ পেন্ডিং থাকলে দেখাবে) */}
-              {req.status === 'pending_staff' && (
+              {req.status === 'pending' && (
                 <div className="grid grid-cols-2 gap-3 mt-6">
                   <button 
                     onClick={() => handleReject(req.id)}
@@ -229,8 +230,7 @@ export default function StaffRequestPage() {
           {filteredData.length === 0 && (
             <div className="col-span-full text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
               <ClipboardList className="mx-auto mb-3 text-slate-200" size={64}/>
-              <p className="text-slate-400 font-bold italic">এই ক্যাটাগরিতে কোনো আবেদন নেই</p>
-              <p className="text-xs text-slate-300 mt-1">ফিল্টার পরিবর্তন করে দেখুন</p>
+              <p className="text-slate-400 font-bold italic">এই ক্যাটাগরিতে আপনার কোনো মেম্বারের আবেদন নেই</p>
             </div>
           )}
         </div>

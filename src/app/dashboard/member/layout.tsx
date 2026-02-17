@@ -6,12 +6,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   Menu, X, Home, Wallet, CreditCard, LogOut, 
   User, LayoutGrid, Bell, History, ClipboardCheck, 
-  ShieldCheck, LifeBuoy, Megaphone
+  LifeBuoy, Megaphone, ChevronDown, ChevronRight,
+  Layers, CircleDollarSign
 } from "lucide-react";
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  
+  // ফোল্ডার ওপেন/ক্লোজ স্টেট
+  const [isServiceMenuOpen, setServiceMenuOpen] = useState(false);
+  const [isFinanceMenuOpen, setFinanceMenuOpen] = useState(false);
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -22,25 +28,23 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     } else {
       router.push('/login');
     }
-  }, [router]);
+
+    // ১. সেবা ও আবেদন পেজে থাকলে ফোল্ডার অটো ওপেন হবে
+    if (pathname.includes('/services') || pathname.includes('/my-requests')) {
+      setServiceMenuOpen(true);
+    }
+
+    // ২. আর্থিক পেজে থাকলে ফোল্ডার অটো ওপেন হবে
+    if (pathname.includes('/savings') || pathname.includes('/loan') || pathname.includes('/transactions')) {
+      setFinanceMenuOpen(true);
+    }
+
+  }, [router, pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     router.push('/login');
   };
-
-  // মেম্বার প্যানেলের জন্য সাজানো মেনু তালিকা
-  const menuItems = [
-    { name: "ওভারভিউ", href: "/dashboard/member", icon: <Home size={20} /> },
-    { name: "সেবা সমূহ", href: "/dashboard/member/services", icon: <LayoutGrid size={20} /> },
-    { name: "আবেদনের তালিকা", href: "/dashboard/member/my-requests", icon: <ClipboardCheck size={20} /> },
-    { name: "আমার সঞ্চয়", href: "/dashboard/member/savings", icon: <Wallet size={20} /> },
-    { name: "লোন স্ট্যাটাস", href: "/dashboard/member/loan", icon: <CreditCard size={20} /> },
-    { name: "লেনদেন ইতিহাস", href: "/dashboard/member/transactions", icon: <History size={20} /> },
-    { name: "নোটিশ বোর্ড", href: "/dashboard/member/notices", icon: <Megaphone size={20} /> },
-    { name: "আমার প্রোফাইল", href: "/dashboard/member/profile", icon: <User size={20} /> },
-    { name: "সহায়তা", href: "/dashboard/member/support", icon: <LifeBuoy size={20} /> },
-  ];
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
@@ -50,6 +54,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         fixed inset-y-0 left-0 z-50 w-64 bg-emerald-950 text-white transform transition-transform duration-300 ease-in-out shadow-2xl
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0
       `}>
+        {/* Sidebar Header */}
         <div className="p-6 border-b border-emerald-900 flex justify-between items-center">
           <div className="font-bold text-xl flex items-center gap-2">
             <div className="w-8 h-8 bg-emerald-500 text-white rounded flex items-center justify-center shadow-lg">A</div>
@@ -60,26 +65,163 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
           </button>
         </div>
 
+        {/* Menu Items */}
         <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-180px)] custom-scrollbar">
-          {menuItems.map((item, index) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link 
-                key={index} 
-                href={item.href} 
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition ${
-                  isActive 
-                    ? "bg-emerald-600 text-white shadow-md border-l-4 border-yellow-400" 
-                    : "text-emerald-100/70 hover:bg-emerald-900 hover:text-white"
-                }`}
-              >
-                {item.icon} {item.name}
-              </Link>
-            );
-          })}
+          
+          {/* ১. ওভারভিউ */}
+          <Link 
+            href="/dashboard/member" 
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition mb-1 ${
+              pathname === "/dashboard/member"
+                ? "bg-emerald-600 text-white shadow-md border-l-4 border-yellow-400" 
+                : "text-emerald-100/70 hover:bg-emerald-900 hover:text-white"
+            }`}
+          >
+            <Home size={20} /> ওভারভিউ
+          </Link>
+
+          {/* ২. ফোল্ডার: সেবা ও আবেদন */}
+          <div className="mb-1">
+            <button 
+              onClick={() => setServiceMenuOpen(!isServiceMenuOpen)}
+              className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl font-medium transition ${
+                pathname.includes('/services') || pathname.includes('/my-requests')
+                  ? "bg-emerald-900 text-white" 
+                  : "text-emerald-100/70 hover:bg-emerald-900 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Layers size={20} />
+                <span>সেবা ও আবেদন</span>
+              </div>
+              {isServiceMenuOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+
+            {isServiceMenuOpen && (
+              <div className="ml-4 mt-1 border-l-2 border-emerald-800 pl-2 space-y-1 transition-all duration-300">
+                <Link 
+                  href="/dashboard/member/services"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-sm transition ${
+                    pathname === "/dashboard/member/services"
+                      ? "bg-emerald-600/40 text-white border border-emerald-600/50" 
+                      : "text-emerald-100/60 hover:bg-emerald-900/50 hover:text-white"
+                  }`}
+                >
+                  <LayoutGrid size={18}/> সেবা সমূহ
+                </Link>
+                <Link 
+                  href="/dashboard/member/my-requests"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-sm transition ${
+                    pathname === "/dashboard/member/my-requests"
+                      ? "bg-emerald-600/40 text-white border border-emerald-600/50" 
+                      : "text-emerald-100/60 hover:bg-emerald-900/50 hover:text-white"
+                  }`}
+                >
+                  <ClipboardCheck size={18}/> আবেদনের তালিকা
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* ৩. ফোল্ডার: আর্থিক তথ্য */}
+          <div className="mb-1">
+            <button 
+              onClick={() => setFinanceMenuOpen(!isFinanceMenuOpen)}
+              className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl font-medium transition ${
+                pathname.includes('/savings') || pathname.includes('/loan') || pathname.includes('/transactions')
+                  ? "bg-emerald-900 text-white" 
+                  : "text-emerald-100/70 hover:bg-emerald-900 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <CircleDollarSign size={20} />
+                <span>আর্থিক তথ্য</span>
+              </div>
+              {isFinanceMenuOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+
+            {isFinanceMenuOpen && (
+              <div className="ml-4 mt-1 border-l-2 border-emerald-800 pl-2 space-y-1 transition-all duration-300">
+                <Link 
+                  href="/dashboard/member/savings"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-sm transition ${
+                    pathname === "/dashboard/member/savings"
+                      ? "bg-emerald-600/40 text-white border border-emerald-600/50" 
+                      : "text-emerald-100/60 hover:bg-emerald-900/50 hover:text-white"
+                  }`}
+                >
+                  <Wallet size={18}/> আমার সঞ্চয়
+                </Link>
+                <Link 
+                  href="/dashboard/member/loan"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-sm transition ${
+                    pathname === "/dashboard/member/loan"
+                      ? "bg-emerald-600/40 text-white border border-emerald-600/50" 
+                      : "text-emerald-100/60 hover:bg-emerald-900/50 hover:text-white"
+                  }`}
+                >
+                  <CreditCard size={18}/> লোন স্ট্যাটাস
+                </Link>
+                <Link 
+                  href="/dashboard/member/transactions"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-sm transition ${
+                    pathname === "/dashboard/member/transactions"
+                      ? "bg-emerald-600/40 text-white border border-emerald-600/50" 
+                      : "text-emerald-100/60 hover:bg-emerald-900/50 hover:text-white"
+                  }`}
+                >
+                  <History size={18}/> লেনদেন ইতিহাস
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* ৪. বাকি সাধারণ মেনু */}
+          <Link 
+            href="/dashboard/member/notices" 
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition mb-1 ${
+              pathname === "/dashboard/member/notices"
+                ? "bg-emerald-600 text-white shadow-md border-l-4 border-yellow-400" 
+                : "text-emerald-100/70 hover:bg-emerald-900 hover:text-white"
+            }`}
+          >
+            <Megaphone size={20} /> নোটিশ বোর্ড
+          </Link>
+
+          <Link 
+            href="/dashboard/member/profile" 
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition mb-1 ${
+              pathname === "/dashboard/member/profile"
+                ? "bg-emerald-600 text-white shadow-md border-l-4 border-yellow-400" 
+                : "text-emerald-100/70 hover:bg-emerald-900 hover:text-white"
+            }`}
+          >
+            <User size={20} /> আমার প্রোফাইল
+          </Link>
+
+          <Link 
+            href="/dashboard/member/support" 
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition mb-1 ${
+              pathname === "/dashboard/member/support"
+                ? "bg-emerald-600 text-white shadow-md border-l-4 border-yellow-400" 
+                : "text-emerald-100/70 hover:bg-emerald-900 hover:text-white"
+            }`}
+          >
+            <LifeBuoy size={20} /> সহায়তা
+          </Link>
+
         </nav>
 
+        {/* Sidebar Footer */}
         <div className="absolute bottom-0 w-full p-4 border-t border-emerald-900 bg-emerald-950">
           <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-950/30 rounded-xl transition text-sm font-bold">
             <LogOut size={18} /> লগ আউট

@@ -15,9 +15,10 @@ import {
   Menu, 
   X, 
   LogOut, 
-  Bell, 
+  Bell,
+  List, 
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 
 export default function ManagementLayout({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ export default function ManagementLayout({ children }: { children: React.ReactNo
     { name: "চূড়ান্ত অনুমোদন", href: "/dashboard/management/approvals", icon: <ClipboardCheck size={20}/> },
     { name: "স্টাফ রিপোর্ট", href: "/dashboard/management/staff-reports", icon: <BarChart3 size={20}/> },
     { name: "মেম্বার ম্যানেজমেন্ট", href: "/dashboard/management/members", icon: <Users size={20}/> }, // হায়ারার্কি ভিউ
+    { name: "ওডিইয়েন্স লিস্ট", href: "/dashboard/management/audience", icon: <List size={20}/> },
     { name: "মাঠ পর্যায়ের তথ্য", href: "/dashboard/management/audience-insights", icon: <Database size={20}/> },
     { name: "আর্থিক বিবরণী", href: "/dashboard/management/financials", icon: <Landmark size={20}/> },
     { name: "নোটিশ বোর্ড", href: "/dashboard/management/notices", icon: <Megaphone size={20}/> },

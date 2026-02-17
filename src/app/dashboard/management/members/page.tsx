@@ -24,7 +24,7 @@ const saghataVillages = [
   "কুন্দপাড়া", "কাঠুর", "নলছিয়া", "চেঙ্গালিয়া"
 ].sort();
 
-const upazilas = ["সাঘাটা", "গাইবান্ধা সদর", "গোবিন্দগঞ্জ", "পলাশবাড়ী", "সাদুল্লাপুর", "সুন্দরগঞ্জ", "ফুলছড়ি"];
+const upazilas = ["সাঘাটা"];
 
 export default function ManagementMemberDirectory() {
   const [step, setStep] = useState(1); // 1: Upazila, 2: Village, 3: Members

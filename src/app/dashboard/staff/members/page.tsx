@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Users, ChevronRight, Search, 
   Building2, ArrowLeft, Smartphone, Home, 
   Loader2, UserPlus, X, Save, Lock, 
-  UserCheck, FileText, Activity, CreditCard, Calendar
+  UserCheck, FileText, Activity
 } from "lucide-react";
 import { supabase } from '../../../../lib/supabaseClient';
 
@@ -38,6 +38,8 @@ export default function MemberManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [villageSearch, setVillageSearch] = useState('');
 
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   // প্রোফাইল ভিউ স্টেট
   const [viewMember, setViewMember] = useState<any>(null);
   const [memberHistory, setMemberHistory] = useState<any[]>([]);
@@ -45,15 +47,24 @@ export default function MemberManagement() {
 
   // নতুন মেম্বার ফরম স্টেট
   const [newMember, setNewMember] = useState({
-    full_name: '', mobile: '', upazila: 'সাঘাটা', village: '', ward_no: '', password: '123'
+    full_name: '', mobile: '', upazila: 'সাঘাটা', village: '', password: '123'
   });
 
-  // মেম্বার ফেচ করা
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setCurrentUser(user);
+  }, []);
+
+  // মেম্বার ফেচ করা (শুধুমাত্র লগইন করা স্টাফের মেম্বাররা)
   const fetchMembers = async (village: string) => {
+    if (!currentUser?.mobile) return;
+    
     setLoading(true);
+    // referred_by ফিল্ড দিয়ে ফিল্টার করা হচ্ছে যাতে অন্য স্টাফের ডাটা না আসে
     const { data } = await supabase.from('members')
       .select('*')
       .eq('village', village)
+      .eq('referred_by', currentUser.mobile) 
       .order('full_name', { ascending: true });
     
     if (data) setMembers(data);
@@ -77,7 +88,6 @@ export default function MemberManagement() {
     setViewMember(member);
     setHistoryLoading(true);
     
-    // বুকিং টেবিল থেকে এই মেম্বারের সব ডাটা আনা (লোন, সার্ভিস, পেমেন্ট)
     const { data } = await supabase
       .from('bookings')
       .select('*')
@@ -91,21 +101,28 @@ export default function MemberManagement() {
   // মেম্বার এড করা
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) {
+        alert("স্টাফ তথ্য পাওয়া যায়নি। পুনরায় লগইন করুন।");
+        return;
+    }
     setLoading(true);
-    const staffUser = JSON.parse(localStorage.getItem('user') || '{}');
 
     try {
       const { error } = await supabase.from('members').insert([{
         ...newMember,
         role: 'member',
-        status: 'active', // স্টাফ এড করলে সরাসরি একটিভ হবে
-        referred_by: staffUser.mobile
+        status: 'active',
+        // অটোমেটিক রেফারেন্স সেট করা
+        referred_by: currentUser.mobile, // স্টাফের মোবাইল নম্বর রেফারেন্স আইডি হিসেবে
+        reference_name: currentUser.full_name // স্টাফের নাম
       }]);
 
       if (error) throw error;
       alert("নতুন মেম্বার সফলভাবে যুক্ত হয়েছে!");
       setIsAddingMember(false);
-      setNewMember({ full_name: '', mobile: '', upazila: 'সাঘাটা', village: '', ward_no: '', password: '123' });
+      setNewMember({ full_name: '', mobile: '', upazila: 'সাঘাটা', village: '', password: '123' });
+      
+      // গ্রাম সিলেক্ট করা থাকলে লিস্ট রিফ্রেশ করা
       if (selectedVillage) fetchMembers(selectedVillage);
     } catch (err: any) { alert(err.message); } 
     finally { setLoading(false); }
@@ -181,10 +198,16 @@ export default function MemberManagement() {
                     </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">ওয়ার্ড নং (অপশনাল)</label>
-                <input type="text" placeholder="যেমন: ৫" className="w-full p-3.5 bg-slate-50 border rounded-xl outline-none" onChange={(e) => setNewMember({...newMember, ward_no: e.target.value})} />
+              
+              {/* Reference Info (Read Only) */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  <p className="text-xs font-bold text-slate-500 mb-1">রেফারেন্স (স্টাফ)</p>
+                  <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold text-slate-800">{currentUser?.full_name}</span>
+                      <span className="text-xs font-mono text-slate-500">{currentUser?.mobile}</span>
+                  </div>
               </div>
+
               <div className="bg-yellow-50 p-3 rounded-xl border border-yellow-200 flex gap-2 items-start">
                 <Lock size={14} className="text-yellow-600 mt-1 shrink-0" />
                 <p className="text-[11px] text-yellow-800 font-medium">লগইন পাসওয়ার্ড অটোমেটিক <b>'123'</b> সেট হবে।</p>
@@ -197,11 +220,10 @@ export default function MemberManagement() {
         </div>
       )}
 
-      {/* --- MEMBER PROFILE & HISTORY MODAL --- */}
+      {/* --- MEMBER PROFILE MODAL (Same as before) --- */}
       {viewMember && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in zoom-in-95 duration-200">
            <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              {/* Profile Header */}
               <div className="bg-slate-900 text-white p-6 flex justify-between items-start shrink-0">
                   <div className="flex items-center gap-4">
                       <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-3xl font-bold border-4 border-slate-800">
@@ -223,12 +245,10 @@ export default function MemberManagement() {
                   <button onClick={() => setViewMember(null)} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"><X size={24}/></button>
               </div>
 
-              {/* Profile Body (History) */}
               <div className="p-6 overflow-y-auto custom-scrollbar bg-slate-50 flex-grow">
                   <h4 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
                       <Activity size={20} className="text-emerald-600"/> সকল কার্যক্রমের ইতিহাস
                   </h4>
-
                   {historyLoading ? (
                       <div className="text-center py-10"><Loader2 className="animate-spin text-emerald-600 mx-auto"/> লোড হচ্ছে...</div>
                   ) : (
@@ -237,53 +257,27 @@ export default function MemberManagement() {
                               <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-emerald-300 transition">
                                   <div>
                                       <div className="flex items-center gap-2 mb-1">
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                              item.service_category === 'Investment' ? 'bg-blue-100 text-blue-700' :
-                                              item.service_category === 'LoanRepayment' ? 'bg-purple-100 text-purple-700' :
-                                              'bg-orange-100 text-orange-700'
-                                          }`}>
-                                              {item.service_category}
-                                          </span>
+                                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{item.service_category}</span>
                                           <span className="text-xs text-slate-400 font-mono">{new Date(item.created_at).toLocaleDateString('bn-BD')}</span>
                                       </div>
                                       <h5 className="font-bold text-slate-800">{item.item_name}</h5>
                                       <p className="text-xs text-slate-500 mt-1">{item.quantity}</p>
                                   </div>
                                   <div className="text-right">
-                                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                                          item.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                          item.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                          'bg-yellow-100 text-yellow-700'
-                                      }`}>
-                                          {item.status}
-                                      </span>
-                                      {item.status === 'pending_staff' && (
-                                          <p className="text-[10px] text-red-400 mt-1">আপনার অনুমোদনের অপেক্ষায়</p>
-                                      )}
+                                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${item.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span>
                                   </div>
                               </div>
                           )) : (
-                              <div className="text-center py-10 text-slate-400 bg-white rounded-xl border border-dashed">
-                                  <FileText className="mx-auto mb-2 opacity-20" size={32}/>
-                                  <p>কোনো রেকর্ড পাওয়া যায়নি</p>
-                              </div>
+                              <div className="text-center py-10 text-slate-400 bg-white rounded-xl border border-dashed"><FileText className="mx-auto mb-2 opacity-20" size={32}/><p>কোনো রেকর্ড নেই</p></div>
                           )}
                       </div>
                   )}
               </div>
               
-              {/* Footer Actions */}
               <div className="p-4 bg-white border-t flex justify-end gap-3 shrink-0">
-                  <a href={`tel:${viewMember.mobile}`} className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-bold text-sm border border-emerald-200 hover:bg-emerald-100 transition">
-                      কল করুন
-                  </a>
+                  <a href={`tel:${viewMember.mobile}`} className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-bold text-sm border border-emerald-200 hover:bg-emerald-100 transition">কল করুন</a>
                   {viewMember.status === 'pending' && (
-                      <button 
-                        onClick={() => activateMember(viewMember.id)} 
-                        className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 transition shadow-md"
-                      >
-                        আইডি একটিভ করুন
-                      </button>
+                      <button onClick={() => activateMember(viewMember.id)} className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 transition shadow-md">আইডি একটিভ করুন</button>
                   )}
               </div>
            </div>
@@ -310,22 +304,13 @@ export default function MemberManagement() {
         <div className="animate-in slide-in-from-right-4">
             <div className="relative mb-6">
                 <Search className="absolute left-4 top-3.5 text-slate-400" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="গ্রামের নাম খুঁজুন..." 
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none focus:border-emerald-500"
-                  onChange={(e) => setVillageSearch(e.target.value)}
-                />
+                <input type="text" placeholder="গ্রামের নাম খুঁজুন..." className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none focus:border-emerald-500" onChange={(e) => setVillageSearch(e.target.value)} />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredVillages.map((village) => (
-                    <div 
-                    key={village} 
-                    onClick={() => {setSelectedVillage(village); fetchMembers(village); setStep(3);}}
-                    className="bg-white p-4 rounded-xl border border-slate-200 text-center hover:bg-emerald-50 hover:border-emerald-400 transition cursor-pointer group shadow-sm"
-                    >
-                    <MapPin size={20} className="mx-auto mb-2 text-emerald-500 group-hover:scale-110 transition" />
-                    <span className="font-bold text-slate-700 text-sm block">{village}</span>
+                    <div key={village} onClick={() => {setSelectedVillage(village); fetchMembers(village); setStep(3);}} className="bg-white p-4 rounded-xl border border-slate-200 text-center hover:bg-emerald-50 hover:border-emerald-400 transition cursor-pointer group shadow-sm">
+                        <MapPin size={20} className="mx-auto mb-2 text-emerald-500 group-hover:scale-110 transition" />
+                        <span className="font-bold text-slate-700 text-sm block">{village}</span>
                     </div>
                 ))}
             </div>
@@ -337,17 +322,11 @@ export default function MemberManagement() {
         <div className="space-y-4 animate-in slide-in-from-bottom-4">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-3.5 text-slate-400" size={20} />
-            <input 
-              type="text" placeholder="মেম্বার খুঁজুন..." 
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none focus:border-emerald-500" 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-            />
+            <input type="text" placeholder="মেম্বার খুঁজুন..." className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none focus:border-emerald-500" onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
 
           {loading ? (
-            <div className="text-center py-20 text-slate-400 flex flex-col items-center">
-                <Loader2 className="animate-spin mb-2 text-emerald-600"/> লোড হচ্ছে...
-            </div>
+            <div className="text-center py-20 text-slate-400 flex flex-col items-center"><Loader2 className="animate-spin mb-2 text-emerald-600"/> লোড হচ্ছে...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredMembers.map((m) => (
@@ -357,27 +336,19 @@ export default function MemberManagement() {
                     <div>
                       <h4 className="font-bold text-slate-800">{m.full_name}</h4>
                       <p className="text-xs text-slate-500 font-mono mt-1"><Smartphone size={12} className="inline mr-1"/> {m.mobile}</p>
-                      {/* Active/Pending Badge */}
-                      <span className={`text-[10px] px-2 py-0.5 rounded mt-1 inline-block font-bold uppercase ${m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {m.status}
-                      </span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded mt-1 inline-block font-bold uppercase ${m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{m.status}</span>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {m.status === 'pending' && (
-                        <button onClick={() => activateMember(m.id)} className="bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-700 flex items-center gap-1">
-                            <UserCheck size={12}/> একটিভ করুন
-                        </button>
+                        <button onClick={() => activateMember(m.id)} className="bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-700 flex items-center gap-1"><UserCheck size={12}/> একটিভ করুন</button>
                     )}
                     <button onClick={() => openProfile(m)} className="text-xs font-bold text-emerald-600 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition border border-emerald-100">প্রোফাইল</button>
                   </div>
                 </div>
               ))}
               {members.length === 0 && (
-                <div className="col-span-full text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400">
-                  <Users className="mx-auto mb-2 opacity-20" size={48} />
-                  <p>এই গ্রামে কোনো মেম্বার নেই</p>
-                </div>
+                <div className="col-span-full text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400"><Users className="mx-auto mb-2 opacity-20" size={48} /><p>এই গ্রামে আপনার কোনো মেম্বার নেই</p></div>
               )}
             </div>
           )}
