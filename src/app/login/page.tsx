@@ -17,16 +17,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [roleMode, setRoleMode] = useState<'member' | 'office'>('member');
 
-  // পেজ লোড হলে আগের সেশন থাকলে ড্যাশবোর্ডে পাঠিয়ে দেওয়া (Optional)
+  // পেজ লোড হলে আগের সেশন চেক (Optional)
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       const user = JSON.parse(savedUser);
-      // redirectBasedOnRole(user.role); // এটি অন করলে লগইন করা থাকলে আর লগইন পেজ দেখাবে না
+      // redirectBasedOnRole(user.role); 
     }
   }, []);
 
-  // রোল অনুযায়ী রিডাইরেক্ট লজিক
   const redirectBasedOnRole = (role: string) => {
     switch (role) {
       case 'admin':
@@ -44,38 +43,42 @@ export default function LoginPage() {
     }
   };
 
-  // মূল লগইন ফাংশন
-  const handleLogin = async (e?: React.FormEvent, demoCreds?: { m: string, p: string }) => {
+  const handleLogin = async (e?: React.FormEvent, demoCreds?: { m: string, p: string, r: 'member' | 'office' }) => {
     if (e) e.preventDefault();
     setLoading(true);
 
     const loginMobile = demoCreds ? demoCreds.m : mobile;
     const loginPass = demoCreds ? demoCreds.p : password;
+    const currentMode = demoCreds ? demoCreds.r : roleMode;
 
     try {
-      // ১. ডাটাবেজ থেকে ইউজার খোঁজা
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('mobile', loginMobile)
-        .eq('password', loginPass)
-        .single();
+      let query = supabase.from('members').select('*').eq('mobile', loginMobile);
+
+      // যদি অফিস মোড হয় বা ডেমো ক্রেডেনশিয়াল থাকে, তবে পাসওয়ার্ড চেক করবে
+      if (currentMode === 'office' || demoCreds?.p) {
+        query = query.eq('password', loginPass);
+      }
+      
+      // মেম্বার মোডে রোল 'member' হতে হবে
+      if (currentMode === 'member') {
+        query = query.eq('role', 'member');
+      }
+
+      const { data, error } = await query.single();
 
       if (error || !data) {
-        throw new Error('মোবাইল নম্বর বা পাসওয়ার্ড ভুল! সঠিক তথ্য দিয়ে চেষ্টা করুন।');
+        throw new Error(currentMode === 'member' 
+          ? 'মোবাইল নম্বরটি আমাদের মেম্বার লিস্টে নেই!' 
+          : 'মোবাইল বা পাসওয়ার্ড ভুল!');
       }
 
-      // ২. একাউন্ট স্ট্যাটাস চেক
       if (data.status === 'rejected') {
-        throw new Error('আপনার আবেদনটি বাতিল করা হয়েছে। অফিসে যোগাযোগ করুন।');
+        throw new Error('আপনার একাউন্টটি বাতিল করা হয়েছে। অফিসে যোগাযোগ করুন।');
       }
 
-      // ৩. লোকাল স্টোরেজে সেশন সেভ করা
+      // সেশন সেভ
       localStorage.setItem('user', JSON.stringify(data));
-
       alert(`স্বাগতম, ${data.full_name}!`);
-
-      // ৪. রোল অনুযায়ী রিডাইরেক্ট
       redirectBasedOnRole(data.role);
 
     } catch (err: any) {
@@ -88,12 +91,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans relative overflow-hidden">
       
-      {/* Background Decoration */}
       <div className="absolute top-0 left-0 w-full h-72 bg-emerald-900 rounded-b-[60px] z-0"></div>
 
       <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-slate-100 relative z-10 animate-in fade-in zoom-in-95 duration-500">
         
-        {/* Logo & Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-emerald-700 shadow-inner">
              <ShieldCheck size={35} />
@@ -105,7 +106,7 @@ export default function LoginPage() {
         {/* Role Toggle Switch */}
         <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
             <button 
-              onClick={() => setRoleMode('member')} 
+              onClick={() => { setRoleMode('member'); setPassword(''); }} 
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${roleMode === 'member' ? 'bg-white text-emerald-700 shadow-md scale-100' : 'text-slate-500 grayscale opacity-70 hover:opacity-100'}`}
             >
                 <UserCheck size={18}/> মেম্বার
@@ -128,21 +129,24 @@ export default function LoginPage() {
               value={mobile}
               onChange={(e) => setMobile(e.target.value)} 
               className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition font-bold text-slate-700" 
-              placeholder="মোবাইল / ইউজার নেম" 
+              placeholder="মোবাইল নম্বর" 
             />
           </div>
 
-          <div className="relative group">
-            <Lock className="absolute left-4 top-4 text-slate-400 group-focus-within:text-emerald-600 transition" size={20} />
-            <input 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)} 
-              className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition font-bold text-slate-700" 
-              placeholder="পাসওয়ার্ড" 
-            />
-          </div>
+          {/* পাসওয়ার্ড ফিল্ড শুধু অফিস মোডে দেখাবে */}
+          {roleMode === 'office' && (
+            <div className="relative group animate-in slide-in-from-top-2">
+              <Lock className="absolute left-4 top-4 text-slate-400 group-focus-within:text-emerald-600 transition" size={20} />
+              <input 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)} 
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition font-bold text-slate-700" 
+                placeholder="পাসওয়ার্ড" 
+              />
+            </div>
+          )}
 
           <button 
             disabled={loading} 
@@ -152,30 +156,30 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Test Login Buttons (Demo Section) */}
+        {/* Demo Login Buttons */}
         <div className="mt-8 pt-6 border-t border-slate-100">
             <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest mb-4">দ্রুত ডেমো লগইন</p>
             <div className="grid grid-cols-2 gap-3">
                 <button 
-                  onClick={() => handleLogin(undefined, { m: 'manager', p: 'manager123' })}
+                  onClick={() => handleLogin(undefined, { m: 'manager', p: 'manager123', r: 'office' })}
                   className="bg-indigo-50 text-indigo-700 py-2.5 rounded-xl text-xs font-bold border border-indigo-100 flex items-center justify-center gap-1 hover:bg-indigo-100 transition"
                 >
                     <UserCog size={14}/> ম্যানেজমেন্ট
                 </button>
                 <button 
-                  onClick={() => handleLogin(undefined, { m: '01700000000', p: 'admin123' })}
+                  onClick={() => handleLogin(undefined, { m: '01700000000', p: 'admin123', r: 'office' })}
                   className="bg-slate-900 text-white py-2.5 rounded-xl text-xs font-bold border border-slate-800 flex items-center justify-center gap-1 hover:bg-black transition"
                 >
                     <ShieldCheck size={14}/> অ্যাডমিন
                 </button>
                 <button 
-                  onClick={() => handleLogin(undefined, { m: 'staff', p: 'staff123' })}
+                  onClick={() => handleLogin(undefined, { m: 'staff', p: 'staff123', r: 'office' })}
                   className="bg-purple-50 text-purple-700 py-2.5 rounded-xl text-xs font-bold border border-purple-100 flex items-center justify-center gap-1 hover:bg-purple-100 transition"
                 >
                     <UserCog size={14}/> স্টাফ
                 </button>
                 <button 
-                  onClick={() => handleLogin(undefined, { m: 'member', p: 'member123' })}
+                  onClick={() => handleLogin(undefined, { m: 'member', p: 'member123', r: 'member' })}
                   className="bg-emerald-50 text-emerald-700 py-2.5 rounded-xl text-xs font-bold border border-emerald-100 flex items-center justify-center gap-1 hover:bg-emerald-100 transition"
                 >
                     <UserCheck size={14}/> মেম্বার
