@@ -4,7 +4,7 @@ import React from 'react';
 import Link from "next/link";
 import { 
   MapPin, Phone, Mail, Facebook, Youtube, 
-  ArrowRight, ShieldCheck, Heart 
+  ArrowRight, Heart 
 } from "lucide-react";
 
 export default function SiteFooter() {
@@ -18,10 +18,11 @@ export default function SiteFooter() {
           {/* 1. Brand & About */}
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-900/50">
-                A
-              </div>
-              <span className="text-2xl font-bold text-white tracking-tight">আমানত ফাউন্ডেশন</span>
+              <img 
+                src="/img/amanat.png" 
+                alt="Amanat Foundation" 
+                className="h-14 w-auto object-contain bg-white p-1.5 rounded-xl shadow-sm"
+              />
             </div>
             <p className="text-slate-400 leading-relaxed text-sm">
               গাইবান্ধার সাঘাটা ও চরাঞ্চলের মানুষের জীবনমান উন্নয়নে নিবেদিত একটি অলাভজনক প্রতিষ্ঠান। আপনার সঞ্চয় ও বিশ্বাস আমাদের কাছে পবিত্র আমানত।
@@ -119,7 +120,7 @@ export default function SiteFooter() {
             <Link href="#" className="hover:text-white transition">গোপনীয়তা নীতি</Link>
             <Link href="#" className="hover:text-white transition">শর্তাবলী</Link>
           </div>
-          <p className="text-xs text-slate-600 flex items-center gap-1">
+          <p className="text-xs text-slate-600 flex items-center gap-1 justify-center md:justify-start">
             Made with <Heart size={12} className="text-red-500 fill-red-500" /> for Humanity
           </p>
         </div>

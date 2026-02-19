@@ -11,6 +11,9 @@ const bengali = Noto_Sans_Bengali({
 export const metadata: Metadata = {
   title: "আমানত ফাউন্ডেশন | দেশগড়ার প্রত্যয়ে অবিচল",
   description: "সমগ্র বাংলাদেশের মানুষের সেবায় নিয়োজিত একটি অলাভজনক সেবামূলক প্রতিষ্ঠান।",
+  icons: {
+    icon: '/img/fa.jpg', // <-- Favicon এখানে সেট করা হয়েছে
+  }
 };
 
 export default function RootLayout({

@@ -39,18 +39,14 @@ export default function Navbar() {
     `}>
       <div className="container mx-auto px-4 lg:px-8 flex justify-between items-center">
         
-        {/* --- 1. LOGO SECTION --- */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 md:w-12 md:h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-xl md:text-2xl shadow-lg shadow-emerald-200 group-hover:bg-emerald-700 transition-all group-hover:rotate-3">
-            A
-            <div className="absolute -bottom-1 -right-1 bg-yellow-400 rounded-full p-1 border-2 border-white shadow-sm">
-               <ShieldCheck size={10} className="text-emerald-900" />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg md:text-xl font-black text-slate-800 leading-none tracking-tight">আমানত</span>
-            <span className="text-[10px] md:text-xs text-emerald-600 font-bold tracking-[0.2em] uppercase">ফাউন্ডেশন</span>
-          </div>
+        {/* 1. Logo Section */}
+        <Link href="/" className="flex items-center gap-3 cursor-pointer group">
+          {/* লোগো ইমেজ */}
+          <img 
+            src="/img/amanat.png" 
+            alt="Amanat Foundation Logo" 
+            className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
+          />
         </Link>
 
         {/* --- 2. DESKTOP MENU --- */}
