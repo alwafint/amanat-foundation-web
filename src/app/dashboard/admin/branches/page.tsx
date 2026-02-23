@@ -5,7 +5,7 @@ import {
   Building, Plus, MapPin, Phone, 
   Trash2, X, ChevronRight, Loader2
 } from "lucide-react";
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../../../../lib/supabaseClient';
 
 export default function BranchManagement() {
   const [branches, setBranches] = useState<any[]>([]);
