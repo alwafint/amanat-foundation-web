@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Users, UserCheck, Banknote, Wallet, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
+import { Users, UserCheck, Banknote, Wallet,BarChart3, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
 
 export default function BranchManagerOverview() {
   const stats = [
