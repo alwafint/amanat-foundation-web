@@ -3,231 +3,258 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-// রিলেটিভ পাথ ব্যবহার করা হয়েছে যাতে এরর না আসে
 import { supabase } from '../../lib/supabaseClient'; 
 import { 
   Lock, Phone, ArrowLeft, LogIn, AlertCircle, Loader2, 
-  UserCheck, UserCog, ShieldCheck, Users 
+  UserCheck, UserCog, ShieldCheck, Eye, EyeOff, Building2 
 } from 'lucide-react';
 
 export default function LoginPage() {
+  const router = useRouter();
+  
+  // State Management
+  const [activeTab, setActiveTab] = useState<'member' | 'office'>('member');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [roleMode, setRoleMode] = useState<'member' | 'office'>('member');
-  const router = useRouter();
+  const [error, setError] = useState('');
 
-  // --- ১. রোলের নাম স্ট্যান্ডার্ড করার ফাংশন ---
+  // --- 1. Auto Login Check ---
+  useEffect(() => {
+    const checkSession = () => {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user?.role) {
+            router.replace(getDashboardRoute(user.role));
+          }
+        }
+      } catch (e) {
+        localStorage.removeItem('user');
+      }
+    };
+    checkSession();
+  }, [router]);
+
+  // --- 2. Helper Functions ---
   const normalizeRole = (role: string) => {
-    if (!role) return '';
-    return role.toLowerCase().trim().replace(/_/g, '-');
+    return role ? role.toLowerCase().trim().replace(/_/g, '-') : 'member';
   };
 
-  // --- ২. রোল অনুযায়ী ড্যাশবোর্ড রুট ঠিক করা ---
   const getDashboardRoute = (role: string) => {
     const stdRole = normalizeRole(role);
-    switch (stdRole) {
-      case 'admin': return '/dashboard/admin';
-      case 'team-leader': return '/dashboard/team-leader';
-      case 'volunteer': return '/dashboard/volunteer';
-      case 'staff': return '/dashboard/staff';
-      case 'management': return '/dashboard/management';
-      case 'super-admin': return '/dashboard/super-admin';
-      default: return '/dashboard/member'; 
-    }
+    const routes: { [key: string]: string } = {
+      'admin': '/dashboard/admin',
+      'team-leader': '/dashboard/team-leader',
+      'volunteer': '/dashboard/volunteer',
+      'staff': '/dashboard/staff',
+      'management': '/dashboard/management',
+      'super-admin': '/dashboard/super-admin',
+    };
+    return routes[stdRole] || '/dashboard/member';
   };
 
-  // --- ৩. অটো লগইন চেক (Safe Redirect) ---
-  useEffect(() => {
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user && user.role) {
-          const target = getDashboardRoute(user.role);
-          if (window.location.pathname !== target) {
-            // Next.js এর fetch error এড়াতে সরাসরি ব্রাউজার রিডাইরেক্ট
-            setTimeout(() => {
-              window.location.replace(target);
-            }, 100);
-          }
-        } else {
-          localStorage.removeItem('user');
-        }
-      }
-    } catch (e) {
-      console.error("Local storage error:", e);
-      localStorage.removeItem('user');
-    }
-  }, []);
-
-  // --- ৪. লগইন হ্যান্ডলার ---
-  const handleLogin = async (e?: React.FormEvent, demoCreds?: { m: string, p: string, r: 'member' | 'office' }) => {
-    if (e) e.preventDefault();
+  // --- 3. Login Handler ---
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
     setLoading(true);
 
-    const loginMobile = demoCreds ? demoCreds.m : mobile.trim();
-    const loginPass = demoCreds ? demoCreds.p : password.trim();
-    const currentMode = demoCreds ? demoCreds.r : roleMode;
-
     try {
-      let query = supabase.from('members').select('*').eq('mobile', loginMobile);
-
-      // অফিস মোডে পাসওয়ার্ড চেক করবে
-      if (currentMode === 'office' || demoCreds?.p) {
-        query = query.eq('password', loginPass);
+      // Basic Validation
+      if (mobile.length < 11) {
+        throw new Error('সঠিক মোবাইল নম্বর দিন (১১ ডিজিট)');
       }
-      
-      // মেম্বার মোডে শুধু মেম্বারদের ঢুকতে দেবে
-      if (currentMode === 'member') {
-        query = query.eq('role', 'member');
+      if (password.length < 3) {
+        throw new Error('সঠিক পাসওয়ার্ড দিন');
+      }
+
+      // Query Database
+      let query = supabase
+        .from('members')
+        .select('*')
+        .eq('mobile', mobile.trim())
+        .eq('password', password.trim()); // For security, check password in DB query
+
+      // Role specific filtering
+      if (activeTab === 'member') {
+        // মেম্বাররা শুধু মেম্বার রোলেই লগইন করতে পারবে
+        query = query.in('role', ['member', 'volunteer']); 
+      } else {
+        // অফিস ট্যাবে মেম্বার বাদে বাকি সবাই
+        query = query.neq('role', 'member');
       }
 
       const { data: user, error: dbError } = await query.maybeSingle();
 
-      if (dbError) throw new Error(dbError.message);
+      if (dbError) throw dbError;
 
       if (!user) {
-        setError(currentMode === 'member' ? 'মোবাইল নাম্বারটি আমাদের সিস্টেমে নেই!' : 'মোবাইল নাম্বার বা পাসওয়ার্ড ভুল!');
-        setLoading(false);
-        return;
+        throw new Error('মোবাইল নম্বর বা পাসওয়ার্ড ভুল! অথবা আপনি ভুল ট্যাবে লগইন করছেন।');
       }
 
-      if (user.status && user.status !== 'active') {
-        setError('আপনার অ্যাকাউন্টটি নিষ্ক্রিয় বা পেন্ডিং অবস্থায় আছে। অফিসে যোগাযোগ করুন।');
-        setLoading(false);
-        return;
+      if (user.status !== 'active') {
+        throw new Error('আপনার অ্যাকাউন্টটি এখনও অনুমোদিত হয়নি। অনুগ্রহ করে অপেক্ষা করুন।');
       }
 
+      // Success Logic
       const standardRole = normalizeRole(user.role);
-
       const userData = {
         id: user.id,
         full_name: user.full_name,
         mobile: user.mobile,
         role: standardRole,
-        village: user.village,
-        parent_id: user.parent_id,
-        branch_id: user.branch_id
+        photo_url: user.photo_url,
+        district: user.district
       };
-      
+
       localStorage.setItem('user', JSON.stringify(userData));
       
-      const targetRoute = getDashboardRoute(standardRole);
-      window.location.href = targetRoute; // সরাসরি রিডাইরেক্ট
+      // Artificial delay for better UX
+      setTimeout(() => {
+        window.location.href = getDashboardRoute(standardRole);
+      }, 500);
 
     } catch (err: any) {
       console.error("Login Error:", err);
-      setError('সার্ভার সমস্যা! ইন্টারনেট সংযোগ চেক করুন।');
+      setError(err.message || 'সার্ভারে সমস্যা হচ্ছে। ইন্টারনেট সংযোগ চেক করুন।');
       setLoading(false);
     }
   };
 
+  // --- 4. Demo Login (Optional: For Development) ---
+  const handleDemoLogin = (role: string, phone: string, pass: string) => {
+    setMobile(phone);
+    setPassword(pass);
+    setActiveTab(role === 'member' ? 'member' : 'office');
+  };
+
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex flex-col justify-center items-center p-4 font-sans">
-      <div className="max-w-md w-full bg-white rounded-[2rem] shadow-xl border border-white overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-500">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden">
+      
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-[#006A4E] rounded-b-[3rem] shadow-lg z-0"></div>
+      <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl z-0"></div>
+      <div className="absolute top-20 left-10 w-20 h-20 bg-[#FFB800]/20 rounded-full blur-xl z-0"></div>
+
+      <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl border border-white z-10 overflow-hidden">
         
-        {/* Header Design */}
-        <div className="bg-[#006A4E] p-10 text-center relative overflow-hidden group">
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-          <div className="relative z-10">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transform rotate-3">
-              <ShieldCheck size={36} className="text-[#006A4E]" />
-            </div>
-            <h2 className="text-2xl font-black text-white mb-1 tracking-tight">আমানত ফাউন্ডেশন</h2>
-            <p className="text-emerald-100/80 text-sm font-medium">নিরাপদ লগইন প্যানেল</p>
+        {/* Header */}
+        <div className="text-center pt-8 pb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4 text-[#006A4E]">
+            <ShieldCheck size={38} strokeWidth={2.5} />
+          </div>
+          <h2 className="text-2xl font-black text-slate-800">আমানত ফাউন্ডেশন</h2>
+          <p className="text-sm text-slate-500 font-medium mt-1">নিরাপদ লগইন প্যানেল</p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="px-8 mt-2">
+          <div className="bg-slate-100 p-1.5 rounded-xl flex relative">
+             <button 
+               onClick={() => { setActiveTab('member'); setError(''); }}
+               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-bold transition-all duration-300 ${activeTab === 'member' ? 'bg-white text-[#006A4E] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+             >
+               <UserCheck size={16}/> সাধারণ সদস্য
+             </button>
+             <button 
+               onClick={() => { setActiveTab('office'); setError(''); }}
+               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-bold transition-all duration-300 ${activeTab === 'office' ? 'bg-white text-[#006A4E] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+             >
+               <Building2 size={16}/> অফিস প্যানেল
+             </button>
           </div>
         </div>
 
-        {/* Login Form */}
-        <div className="p-8 pt-10">
-          
-          <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
-              <button onClick={() => { setRoleMode('member'); setPassword(''); }} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${roleMode === 'member' ? 'bg-white text-[#006A4E] shadow-md scale-100' : 'text-slate-500 grayscale opacity-70 hover:opacity-100'}`}>
-                  <UserCheck size={18}/> মেম্বার
-              </button>
-              <button onClick={() => setRoleMode('office')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${roleMode === 'office' ? 'bg-white text-[#006A4E] shadow-md scale-100' : 'text-slate-500 grayscale opacity-70 hover:opacity-100'}`}>
-                  <UserCog size={18}/> অফিস
-              </button>
-          </div>
-
+        {/* Form */}
+        <div className="p-8">
           {error && (
-            <div className="mb-6 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-600 rounded-r-lg text-sm font-bold flex items-center gap-3 animate-pulse">
-              <AlertCircle size={18} /> {error}
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3 text-rose-600 animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={20} className="shrink-0 mt-0.5" />
+              <span className="text-xs font-bold leading-relaxed">{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center group-focus-within:text-[#006A4E]">
-                <Phone size={20} className="text-slate-400 transition-colors" />
-              </div>
-              <input
-                type="text"
-                required
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-[#006A4E] outline-none text-slate-800 font-bold transition-all placeholder:font-normal"
-                placeholder="01XXXXXXXXX"
-              />
-            </div>
-
-            {roleMode === 'office' && (
-              <div className="relative group animate-in slide-in-from-top-2">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center group-focus-within:text-[#006A4E]">
-                  <Lock size={20} className="text-slate-400 transition-colors" />
+          <form onSubmit={handleLogin} className="space-y-5">
+            
+            {/* Mobile Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-600 ml-1 uppercase">মোবাইল নম্বর</label>
+              <div className="relative group focus-within:ring-2 ring-[#006A4E]/20 rounded-xl transition-all">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Phone size={18} className="text-slate-400 group-focus-within:text-[#006A4E] transition-colors" />
                 </div>
                 <input
-                  type="password"
+                  type="number"
+                  required
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#006A4E] focus:outline-none text-slate-800 font-bold transition-all placeholder:font-normal text-sm"
+                  placeholder="017XXXXXXXX"
+                />
+              </div>
+            </div>
+
+            {/* Password Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-600 ml-1 uppercase">পাসওয়ার্ড</label>
+              <div className="relative group focus-within:ring-2 ring-[#006A4E]/20 rounded-xl transition-all">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock size={18} className="text-slate-400 group-focus-within:text-[#006A4E] transition-colors" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-[#006A4E] outline-none text-slate-800 font-bold transition-all placeholder:font-normal"
+                  className="block w-full pl-11 pr-11 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#006A4E] focus:outline-none text-slate-800 font-bold transition-all placeholder:font-normal text-sm"
                   placeholder="******"
                 />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#006A4E] transition-colors cursor-pointer"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-            )}
+            </div>
+
+            <div className="flex justify-end">
+              <Link href="#" className="text-[11px] font-bold text-slate-400 hover:text-[#006A4E] transition">
+                পাসওয়ার্ড ভুলে গেছেন?
+              </Link>
+            </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#006A4E] hover:bg-[#005a42] text-white font-bold py-4 rounded-2xl shadow-lg flex justify-center items-center gap-3 disabled:opacity-70 transition-all active:scale-[0.98]"
+              className="w-full bg-[#006A4E] hover:bg-[#005a42] text-white py-4 rounded-xl font-bold shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
             >
-              {loading ? <Loader2 size={24} className="animate-spin" /> : <><LogIn size={20} /> লগইন করুন</>}
+              {loading ? <Loader2 size={20} className="animate-spin" /> : <><LogIn size={20} /> লগইন করুন</>}
             </button>
           </form>
 
-          {/* Test Login Buttons */}
-          <div className="mt-8 pt-6 border-t border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest mb-4">দ্রুত ডেমো লগইন</p>
-              <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => handleLogin(undefined, { m: '01711111111', p: 'leader123', r: 'office' })} className="bg-indigo-50 text-indigo-700 py-2.5 rounded-xl text-xs font-bold border border-indigo-100 flex items-center justify-center gap-1 hover:bg-indigo-100 transition">
-                      <Users size={14}/> টিম লিডার
-                  </button>
-                  <button onClick={() => handleLogin(undefined, { m: '01700000000', p: 'admin123', r: 'office' })} className="bg-slate-900 text-white py-2.5 rounded-xl text-xs font-bold border border-slate-800 flex items-center justify-center gap-1 hover:bg-black transition">
-                      <ShieldCheck size={14}/> অ্যাডমিন
-                  </button>
-                  <button onClick={() => handleLogin(undefined, { m: '01722222222', p: 'staff123', r: 'office' })} className="bg-purple-50 text-purple-700 py-2.5 rounded-xl text-xs font-bold border border-purple-100 flex items-center justify-center gap-1 hover:bg-purple-100 transition">
-                      <UserCog size={14}/> স্টাফ
-                  </button>
-                  <button onClick={() => handleLogin(undefined, { m: '01733333333', p: 'member123', r: 'member' })} className="bg-emerald-50 text-emerald-700 py-2.5 rounded-xl text-xs font-bold border border-emerald-100 flex items-center justify-center gap-1 hover:bg-emerald-100 transition">
-                      <UserCheck size={14}/> মেম্বার
-                  </button>
-              </div>
-          </div>
-          
-          <div className="mt-8 text-center">
-            <p className="text-sm text-slate-500">
-              একাউন্ট নেই? <Link href="/register" className="text-emerald-700 font-bold hover:underline">রেজিস্ট্রেশন করুন</Link>
+          {/* Footer Links */}
+          <div className="mt-8 text-center space-y-4">
+            <p className="text-xs font-medium text-slate-500">
+              একাউন্ট নেই? <Link href="/register/team-leader" className="text-[#006A4E] font-extrabold hover:underline">টিম লিডার আবেদন</Link>
             </p>
-            <Link href="/" className="inline-flex items-center gap-1 text-slate-400 text-xs mt-4 hover:text-[#006A4E] transition">
-              <ArrowLeft size={12} /> হোম পেজে ফিরে যান
+            
+            <Link href="/" className="inline-flex items-center gap-1.5 text-slate-400 text-[11px] font-bold uppercase tracking-wider hover:text-[#006A4E] transition group">
+              <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> হোম পেজে ফিরে যান
             </Link>
           </div>
         </div>
       </div>
+      
+      {/* Copyright */}
+      <p className="absolute bottom-4 text-[10px] text-slate-400 font-medium">
+        &copy; ২০২৬ আমানত ফাউন্ডেশন | সর্বস্বত্ব সংরক্ষিত
+      </p>
+
     </div>
   );
 }
