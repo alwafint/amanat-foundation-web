@@ -5,8 +5,8 @@ import {
   Building, Plus, MapPin, Phone, 
   Trash2, X, ChevronRight, Loader2
 } from "lucide-react";
-import { supabase } from '../../../../lib/supabaseClient'; 
-// লক্ষ্য করুন: এখন ৫টি ../ দেওয়া হয়েছে কারণ পেজটি এক ধাপ ভেতরে ঢুকেছে।
+// এই লাইনটি ৮ নম্বর লাইনে রিপ্লেস করুন
+import { supabase } from '../../../../../lib/supabaseClient';
 
 export default function BranchManagement() {
   const [branches, setBranches] = useState<any[]>([]);
