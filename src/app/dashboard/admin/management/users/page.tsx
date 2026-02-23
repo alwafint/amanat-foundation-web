@@ -7,8 +7,7 @@ import {
   ShieldCheck, Building2, Save, UserPlus, AlertCircle,
   Briefcase, UserCheck, Lock
 } from "lucide-react";
-import { supabase } from '../../../../lib/supabaseClient'; 
-// লক্ষ্য করুন: এখন ৫টি ../ দেওয়া হয়েছে কারণ পেজটি এক ধাপ ভেতরে ঢুকেছে।
+import { supabase } from '@/lib/supabaseClient';
 
 // সাঘাটা উপজেলার গ্রামের তালিকা (ফলব্যাক হিসেবে রাখা হলো)
 const saghataVillages = [

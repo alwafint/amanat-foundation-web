@@ -7,7 +7,7 @@ import {
   Loader2, AlertCircle, ShieldCheck, Phone, LogOut, Camera, X, Check, Edit2
 } from "lucide-react";
 // এই লাইনটি ৯ নম্বর লাইনে রিপ্লেস করুন
-import { supabase } from '../../../../../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function TeamLeaderDashboard() {
   const router = useRouter();

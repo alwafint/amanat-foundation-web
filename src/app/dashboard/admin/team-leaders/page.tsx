@@ -6,8 +6,7 @@ import {
   Shield, ShieldCheck, Loader2, Phone, 
   Lock, User 
 } from "lucide-react"; // এখানে ShieldCheck যুক্ত করা হয়েছে
-import { supabase } from '../../../../../lib/supabaseClient'; 
-// লক্ষ্য করুন: এখন ৫টি ../ দেওয়া হয়েছে কারণ পেজটি এক ধাপ ভেতরে ঢুকেছে।
+import { supabase } from '@/lib/supabaseClient';
 
 export default function TeamLeaderSetup() {
   const [loading, setLoading] = useState(false);
