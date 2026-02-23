@@ -1,0 +1,289 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { UserCheck, MapPin, Plus, Trash2, Shield, Loader2, Phone, Lock, User } from "lucide-react";
+import { supabase } from '../../../../lib/supabaseClient'; 
+
+export default function TeamLeaderSetup() {
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  
+  // Data States
+  const [teamLeaders, setTeamLeaders] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [upazilas, setUpazilas] = useState<any[]>([]);
+  const [unions, setUnions] = useState<any[]>([]);
+  const [villages, setVillages] = useState<any[]>([]);
+
+  // Form States
+  const [fullName, setFullName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // Selection States
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedUpazila, setSelectedUpazila] = useState('');
+  const [selectedUnion, setSelectedUnion] = useState('');
+  const [selectedVillage, setSelectedVillage] = useState('');
+
+  // Initial Load
+  useEffect(() => {
+    fetchDistricts();
+    fetchTeamLeaders();
+  }, []);
+
+  const fetchDistricts = async () => {
+    const { data } = await supabase.from('districts').select('*').order('name');
+    if (data) setDistricts(data);
+  };
+
+  const fetchTeamLeaders = async () => {
+    setFetching(true);
+    // members টেবিল থেকে টিম লিডারদের ডাটা আনা হচ্ছে
+    const { data, error } = await supabase
+      .from('members')
+      .select('*, villages(name)') 
+      .eq('role', 'team-leader')
+      .order('created_at', { ascending: false });
+      
+    if (data) setTeamLeaders(data);
+    setFetching(false);
+  };
+
+  // --- Cascading Dropdown Handlers ---
+  const handleDistrictChange = async (e: any) => {
+    const id = e.target.value;
+    setSelectedDistrict(id);
+    setSelectedUpazila(''); setSelectedUnion(''); setSelectedVillage('');
+    setUpazilas([]); setUnions([]); setVillages([]);
+    if (id) {
+      const { data } = await supabase.from('upazilas').select('*').eq('district_id', id).order('name');
+      if (data) setUpazilas(data);
+    }
+  };
+
+  const handleUpazilaChange = async (e: any) => {
+    const id = e.target.value;
+    setSelectedUpazila(id);
+    setSelectedUnion(''); setSelectedVillage('');
+    setUnions([]); setVillages([]);
+    if (id) {
+      const { data } = await supabase.from('unions').select('*').eq('upazila_id', id).order('name');
+      if (data) setUnions(data);
+    }
+  };
+
+  const handleUnionChange = async (e: any) => {
+    const id = e.target.value;
+    setSelectedUnion(id);
+    setSelectedVillage('');
+    if (id) {
+      const { data } = await supabase.from('villages').select('*').eq('union_id', id).order('name');
+      if (data) setVillages(data);
+    }
+  };
+
+  // --- টিম লিডার যুক্ত করার লজিক ---
+  const handleAddTeamLeader = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName || !mobile || !password || !selectedVillage) {
+      alert("সব তথ্য এবং গ্রাম সঠিকভাবে পূরণ করুন।");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // ১. লজিক চেক: এই গ্রামে কি ইতিমধ্যে কোনো টিম লিডার আছে?
+      const { data: existingLeader } = await supabase
+        .from('members')
+        .select('id')
+        .eq('role', 'team-leader')
+        .eq('village_id', selectedVillage)
+        .maybeSingle();
+
+      if (existingLeader) {
+        alert("দুঃখিত! এই গ্রামে ইতিমধ্যে একজন টিম লিডার নিয়োগ দেওয়া আছে। ১ গ্রামে ১ জনের বেশি নিয়োগ সম্ভব নয়।");
+        setLoading(false);
+        return;
+      }
+
+      // ২. মোবাইল নাম্বার ডুপ্লিকেট চেক
+      const { data: existingUser } = await supabase
+        .from('members')
+        .select('id')
+        .eq('mobile', mobile)
+        .maybeSingle();
+
+      if (existingUser) {
+        alert("এই মোবাইল নাম্বার দিয়ে ইতিমধ্যে একটি একাউন্ট খোলা আছে।");
+        setLoading(false);
+        return;
+      }
+
+      // ৩. ডাটা ইনসার্ট করা
+      const adminData = JSON.parse(localStorage.getItem('user') || '{}');
+      const { error } = await supabase.from('members').insert([{
+        full_name: fullName,
+        mobile: mobile,
+        password: password,
+        role: 'team-leader',
+        village_id: selectedVillage,
+        parent_id: adminData.id || null
+      }]);
+
+      if (error) throw error;
+
+      alert("টিম লিডার একাউন্ট সফলভাবে তৈরি হয়েছে!");
+      
+      // Reset Form
+      setFullName(''); setMobile(''); setPassword('');
+      setSelectedDistrict(''); setSelectedUpazila(''); setSelectedUnion(''); setSelectedVillage('');
+      fetchTeamLeaders();
+
+    } catch (error: any) {
+      alert("Error: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("আপনি কি নিশ্চিত এই টিম লিডারকে রিমুভ করতে চান?")) return;
+    const { error } = await supabase.from('members').delete().eq('id', id);
+    if (!error) fetchTeamLeaders();
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      
+      {/* Header */}
+      <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-[#006A4E] flex items-center gap-2">
+            <Shield className="text-[#FFB800]" /> টিম লিডার নিয়োগ
+          </h2>
+          <p className="text-slate-500 text-sm mt-1">প্রতিটি গ্রামের জন্য একজন দায়িত্বশীল টিম লিডার নিয়োগ দিন</p>
+        </div>
+        <div className="bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100">
+          <span className="text-[10px] font-bold text-[#006A4E] uppercase tracking-wider block">মোট টিম লিডার</span>
+          <span className="text-xl font-black text-[#006A4E]">{teamLeaders.length} জন</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left: Form */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 sticky top-6">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
+              <Plus size={20} className="text-[#006A4E]" /> নতুন একাউন্ট খুলুন
+            </h3>
+            
+            <form onSubmit={handleAddTeamLeader} className="space-y-4">
+              <div className="space-y-3">
+                <div className="relative">
+                  <User size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                  <input type="text" placeholder="টিম লিডারের নাম" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#006A4E]" required />
+                </div>
+                <div className="relative">
+                  <Phone size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                  <input type="text" placeholder="মোবাইল নাম্বার" value={mobile} onChange={e => setMobile(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#006A4E]" required />
+                </div>
+                <div className="relative">
+                  <Lock size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                  <input type="password" placeholder="পাসওয়ার্ড সেট করুন" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#006A4E]" required />
+                </div>
+              </div>
+
+              {/* Location Selectors */}
+              <div className="pt-4 space-y-3">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">লোকেশন নির্বাচন</p>
+                
+                <select value={selectedDistrict} onChange={handleDistrictChange} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#006A4E]" required>
+                  <option value="">জেলা নির্বাচন করুন</option>
+                  {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+
+                <select value={selectedUpazila} onChange={handleUpazilaChange} disabled={!selectedDistrict} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm disabled:opacity-50 focus:outline-none focus:border-[#006A4E]" required>
+                  <option value="">উপজেলা নির্বাচন করুন</option>
+                  {upazilas.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+
+                <select value={selectedUnion} onChange={handleUnionChange} disabled={!selectedUpazila} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm disabled:opacity-50 focus:outline-none focus:border-[#006A4E]" required>
+                  <option value="">ইউনিয়ন নির্বাচন করুন</option>
+                  {unions.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+
+                <select value={selectedVillage} onChange={(e) => setSelectedVillage(e.target.value)} disabled={!selectedUnion} className="w-full bg-[#006A4E]/5 border border-[#006A4E]/20 rounded-xl px-4 py-2.5 text-sm font-bold text-[#006A4E] disabled:opacity-50 focus:outline-none focus:border-[#006A4E]" required>
+                  <option value="">গ্রাম নির্বাচন করুন</option>
+                  {villages.map(v => <option key={v.id} value={v.id}>{v.name} (ওয়ার্ড: {v.ward_no})</option>)}
+                </select>
+              </div>
+
+              <button type="submit" disabled={loading} className="w-full bg-[#006A4E] text-white py-4 rounded-2xl hover:bg-emerald-800 disabled:opacity-50 flex items-center justify-center gap-2 font-bold shadow-lg shadow-emerald-900/20 transition-all mt-4">
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <UserCheck size={20} />}
+                একাউন্ট তৈরি করুন
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Right: List */}
+        <div className="lg:col-span-8">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 min-h-[600px] flex flex-col">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
+              < ShieldCheck size={20} className="text-[#FFB800]" /> নিযুক্ত টিম লিডারদের তালিকা
+            </h3>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+              {fetching ? (
+                <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                  <Loader2 className="animate-spin text-[#006A4E] mb-2" />
+                  <p className="text-xs">ডাটা লোড হচ্ছে...</p>
+                </div>
+              ) : teamLeaders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-slate-400 italic">
+                  <User size={48} className="opacity-10 mb-2" />
+                  <p className="text-sm">এখনো কোনো টিম লিডার নিয়োগ দেওয়া হয়নি</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {teamLeaders.map((leader) => (
+                    <div key={leader.id} className="group border border-slate-100 p-5 rounded-2xl flex flex-col justify-between hover:border-[#006A4E]/30 hover:bg-emerald-50/10 transition-all bg-slate-50/50 relative overflow-hidden">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-white border-2 border-emerald-100 text-[#006A4E] rounded-full flex items-center justify-center font-black text-xl shadow-sm">
+                            {leader.full_name.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="font-black text-slate-800 text-sm leading-tight">{leader.full_name}</h4>
+                            <p className="text-xs text-slate-500 mt-0.5 font-medium">{leader.mobile}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => handleDelete(leader.id)} className="text-slate-300 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-all">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                      
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[#006A4E]">
+                        <MapPin size={14} className="text-[#FFB800]" />
+                        <span className="text-[11px] font-bold uppercase tracking-tight">গ্রাম: {leader.villages?.name || 'লোকেশন পাওয়া যায়নি'}</span>
+                      </div>
+                      
+                      {/* Decoration */}
+                      <div className="absolute -bottom-2 -right-2 opacity-[0.03] rotate-12">
+                        <Shield size={80} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
