@@ -6,7 +6,8 @@ import {
   TrendingUp, ShieldAlert, PieChart, 
   Loader2, Landmark, Users, Wallet, 
   ShieldCheck, Globe, Building2, Plus, X,
-  Activity, Calendar, DollarSign, ArrowRight, ChevronRight
+  Activity, Calendar, DollarSign, ArrowRight, ChevronRight,
+  MapPin // <-- এখানে MapPin যোগ করা হয়েছে
 } from "lucide-react";
 import { supabase } from '../../../lib/supabaseClient';
 
@@ -15,7 +16,6 @@ export default function AdminMasterDashboard() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   
-  // ড্যাশবোর্ড ডাটা স্টেট (এখানে কী-র নাম 'members')
   const [stats, setStats] = useState({
     totalCapital: 0,
     totalProfit: 0,
@@ -73,10 +73,9 @@ export default function AdminMasterDashboard() {
       setBranches(branchData || []);
       setRecentActivities(recent || []);
       
-      // এখানে কী-র নাম 'members' ঠিক করে দেওয়া হয়েছে
       setStats({
         totalBranches: branchData?.length || 0,
-        members: memberCount || 0, // ফিক্সড: totalMembers এর বদলে members
+        members: memberCount || 0,
         totalCapital: totalInv,
         totalProfit: totalInv * 0.10,
         pendingApprovals: pendingCount || 0
@@ -131,7 +130,7 @@ export default function AdminMasterDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
          <StatBox label="মোট ব্রাঞ্চ" value={stats.totalBranches} icon={<Building2/>} color="bg-blue-50 text-blue-600"/>
          <StatBox label="মোট মেম্বার" value={stats.members} icon={<Users/>} color="bg-purple-50 text-purple-600"/>
-         <StatBox label="মোট বিনিয়োগ" value={`৳ ${stats.totalCapital}`} icon={<Wallet/>} color="bg-emerald-50 text-emerald-600"/>
+         <StatBox label="মোট বিনিয়োগ" value={`৳ ${stats.totalCapital.toLocaleString()}`} icon={<Wallet/>} color="bg-emerald-50 text-emerald-600"/>
          <StatBox label="পেন্ডিং কাজ" value={stats.pendingApprovals} icon={<ShieldCheck/>} color="bg-amber-50 text-amber-600"/>
       </div>
 
