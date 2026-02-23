@@ -4,9 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Users, UserPlus, MapPin, Trash2, 
-  Loader2, AlertCircle, ShieldCheck, Phone, LogOut, Camera, X, Check, Edit2
+  Loader2, ShieldCheck, Phone, LogOut, Camera, X, Edit2
 } from "lucide-react";
-// এই লাইনটি ৯ নম্বর লাইনে রিপ্লেস করুন
+// সঠিক রিলেটিভ পাথ 
 import { supabase } from '../../../lib/supabaseClient';
 
 export default function TeamLeaderDashboard() {
@@ -29,7 +29,7 @@ export default function TeamLeaderDashboard() {
   // Edit Profile States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState('');
-  const [editAvatar, setEditAvatar] = useState('');
+  const [editPhoto, setEditPhoto] = useState('');
 
   const MAX_VOLUNTEERS = 10;
 
@@ -40,42 +40,48 @@ export default function TeamLeaderDashboard() {
       if (!savedUser) return router.push('/login');
       
       const parsedUser = JSON.parse(savedUser);
-      if (parsedUser.role !== 'team-leader') return router.push('/login');
+      // রোল 'team-leader' বা 'team_leader' হতে পারে
+      if (parsedUser.role !== 'team-leader' && parsedUser.role !== 'team_leader') {
+         return router.push('/login');
+      }
 
       setCurrentUser(parsedUser);
-      await fetchTeamLeaderData(parsedUser.id);
+      await fetchTeamLeaderData(parsedUser.mobile);
     };
     checkSession();
   }, [router]);
 
-  const fetchTeamLeaderData = async (leaderId: number) => {
+  const fetchTeamLeaderData = async (leaderMobile: string) => {
     setFetching(true);
     try {
-      // ১. টিম লিডারের ডিটেইলস (members টেবিল থেকে ডাটা নেওয়া হচ্ছে)
+      // ১. টিম লিডারের ডিটেইলস
       const { data: leaderData } = await supabase
         .from('members')
-        .select('*, villages(name)')
-        .eq('id', leaderId)
+        .select('*')
+        .eq('mobile', leaderMobile)
         .maybeSingle();
         
       if (leaderData) {
         setCurrentUser(leaderData);
         setEditName(leaderData.full_name);
-        setEditAvatar(leaderData.avatar_url || '');
-        if (leaderData.villages) setVillageName(leaderData.villages.name);
+        setEditPhoto(leaderData.photo_url || ''); // 'avatar_url' এর বদলে 'photo_url'
+        setVillageName(leaderData.village || 'N/A'); // 'villages(name)' এর বদলে 'village'
       }
 
-      // ২. ভলান্টিয়ার লিস্ট (members টেবিল থেকে)
+      // ২. ভলান্টিয়ার লিস্ট (parent_id এর বদলে referred_by ব্যবহার করা হলো)
       const { data: volData } = await supabase
         .from('members')
         .select('*')
-        .eq('parent_id', leaderId)
+        .eq('referred_by', leaderMobile) 
         .eq('role', 'volunteer')
         .order('created_at', { ascending: false });
 
       if (volData) setVolunteers(volData);
-    } catch (error) { console.error(error); }
-    setFetching(false);
+    } catch (error) { 
+      console.error(error); 
+    } finally {
+      setFetching(false);
+    }
   };
 
   // --- প্রোফাইল আপডেট লজিক ---
@@ -83,14 +89,14 @@ export default function TeamLeaderDashboard() {
     setSubmitting(true);
     const { error } = await supabase
       .from('members')
-      .update({ full_name: editName, avatar_url: editAvatar })
+      .update({ full_name: editName, photo_url: editPhoto })
       .eq('id', currentUser.id);
 
     if (error) alert(error.message);
     else {
       alert("প্রোফাইল আপডেট সফল হয়েছে!");
       setIsEditModalOpen(false);
-      fetchTeamLeaderData(currentUser.id);
+      fetchTeamLeaderData(currentUser.mobile);
     }
     setSubmitting(false);
   };
@@ -98,26 +104,29 @@ export default function TeamLeaderDashboard() {
   // --- নতুন ভলান্টিয়ার যোগ করার লজিক ---
   const handleAddVolunteer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (volunteers.length >= MAX_VOLUNTEERS) return alert("লিমিট পূর্ণ!");
+    if (volunteers.length >= MAX_VOLUNTEERS) return alert("লিমিট পূর্ণ! ১০ জনের বেশি ভলান্টিয়ার যোগ করা যাবে না।");
     
     setSubmitting(true);
     try {
       const { error } = await supabase.from('members').insert([{
         full_name: fullName,
-        mobile: phone, // আপনার DB কলাম অনুযায়ী mobile/phone চেক করুন
+        mobile: phone, 
         password: password, 
         role: 'volunteer',
-        village_id: currentUser.village_id,
-        parent_id: currentUser.id,
+        village: currentUser.village,
+        referred_by: currentUser.mobile, // 'parent_id' এর বদলে 'referred_by'
         status: 'active'
       }]);
 
       if (error) throw error;
       alert("✅ ভলান্টিয়ার সফলভাবে যুক্ত হয়েছে!");
       setFullName(''); setPhone(''); setPassword('');
-      fetchTeamLeaderData(currentUser.id);
-    } catch (error: any) { alert(error.message); }
-    setSubmitting(false);
+      fetchTeamLeaderData(currentUser.mobile);
+    } catch (error: any) { 
+      alert(error.message); 
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -145,8 +154,8 @@ export default function TeamLeaderDashboard() {
             {/* প্রোফাইল ছবি ও এডিট আইকন */}
             <div className="relative group">
               <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center font-bold text-2xl border-2 border-white/20 shadow-inner overflow-hidden">
-                {currentUser?.avatar_url ? (
-                  <img src={currentUser.avatar_url} alt="profile" className="w-full h-full object-cover" />
+                {currentUser?.photo_url ? (
+                  <img src={currentUser.photo_url} alt="profile" className="w-full h-full object-cover" />
                 ) : currentUser?.full_name?.charAt(0)}
               </div>
               <button onClick={() => setIsEditModalOpen(true)} className="absolute -bottom-1 -right-1 bg-[#FFB800] p-1.5 rounded-lg text-[#006A4E] shadow-lg hover:scale-110 transition-transform">
@@ -180,14 +189,14 @@ export default function TeamLeaderDashboard() {
         <div className="lg:col-span-4">
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
             <h3 className="font-bold text-slate-800 mb-4 pb-3 border-b flex items-center gap-2">
-              <UserPlus size={20} className="text-[#006A4E]" /> নতুন মেম্বার নিয়োগ
+              <UserPlus size={20} className="text-[#006A4E]" /> নতুন ভলান্টিয়ার নিয়োগ
             </h3>
             <form onSubmit={handleAddVolunteer} className="space-y-4">
                 <input type="text" placeholder="পূর্ণ নাম" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#006A4E]" required />
                 <input type="tel" placeholder="মোবাইল নাম্বার" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#006A4E]" required />
                 <input type="password" placeholder="পাসওয়ার্ড" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#006A4E]" required />
-                <button type="submit" disabled={submitting} className="w-full bg-[#006A4E] text-white py-4 rounded-xl hover:bg-emerald-800 font-bold flex justify-center gap-2 shadow-lg shadow-emerald-900/10">
-                  {submitting ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />} যুক্ত করুন
+                <button type="submit" disabled={submitting} className="w-full bg-[#006A4E] text-white py-4 rounded-xl hover:bg-emerald-800 font-bold flex justify-center gap-2 shadow-lg shadow-emerald-900/10 transition-all active:scale-[0.98]">
+                  {submitting ? <Loader2 size={20} className="animate-spin" /> : <><UserPlus size={20} /> যুক্ত করুন</>}
                 </button>
             </form>
           </div>
@@ -203,9 +212,9 @@ export default function TeamLeaderDashboard() {
               {volunteers.map((vol) => (
                 <div key={vol.id} className="group bg-slate-50 border border-slate-100 hover:border-[#006A4E] p-4 rounded-2xl flex items-center justify-between transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white border-2 border-emerald-50 rounded-2xl flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm">
-                      {vol.avatar_url ? (
-                        <img src={vol.avatar_url} alt="vol" className="w-full h-full object-cover" />
+                    <div className="w-12 h-12 bg-white border-2 border-emerald-50 rounded-2xl flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm text-[#006A4E]">
+                      {vol.photo_url ? (
+                        <img src={vol.photo_url} alt="vol" className="w-full h-full object-cover" />
                       ) : vol.full_name.charAt(0)}
                     </div>
                     <div>
@@ -223,7 +232,7 @@ export default function TeamLeaderDashboard() {
                   </div>
                 </div>
               ))}
-              {volunteers.length === 0 && <p className="text-center text-slate-400 py-10 col-span-full">কোনো ভলান্টিয়ার নেই</p>}
+              {volunteers.length === 0 && <p className="text-center text-slate-400 py-10 col-span-full">কোনো ভলান্টিয়ার নেই। নতুন সদস্য যুক্ত করুন।</p>}
             </div>
           </div>
         </div>
@@ -242,7 +251,7 @@ export default function TeamLeaderDashboard() {
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1">ছবির লিঙ্ক (URL)</label>
-                <input type="text" value={editAvatar} onChange={e => setEditAvatar(e.target.value)} placeholder="https://image-link.com" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-[#006A4E] text-xs" />
+                <input type="text" value={editPhoto} onChange={e => setEditPhoto(e.target.value)} placeholder="https://image-link.com" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-[#006A4E] text-xs" />
               </div>
               <button onClick={handleUpdateProfile} disabled={submitting} className="w-full bg-[#006A4E] text-white py-4 rounded-2xl font-black shadow-lg shadow-emerald-900/20 active:scale-95 transition-all">
                 {submitting ? "সেভ হচ্ছে..." : "সংরক্ষণ করুন"}

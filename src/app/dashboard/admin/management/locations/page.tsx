@@ -6,7 +6,7 @@ import {
   Loader2, Building2, Map, Navigation, Home, Search 
 } from "lucide-react";
 // এই লাইনটি ৮ নম্বর লাইনে রিপ্লেস করুন
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase } from '../../../../../lib/supabaseClient';
 
 export default function LocationManagement() {
   const [loading, setLoading] = useState(false);

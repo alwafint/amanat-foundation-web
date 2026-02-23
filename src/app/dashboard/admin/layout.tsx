@@ -34,6 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // ১. মেইন কন্ট্রোল আইটেম
   const mainItems = [
     { name: "মাস্টার ড্যাশবোর্ড", href: "/dashboard/admin", icon: <LayoutDashboard size={18}/> },
+    
   ];
 
   // ২. আপনার কাঙ্ক্ষিত ৩টি পেজ (ম্যানেজমেন্ট ক্যাটাগরি)
@@ -41,17 +42,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "ব্রাঞ্চ ম্যানেজমেন্ট", href: "/dashboard/admin/management/branches", icon: <Building size={18}/> },
     { name: "অ্যাডমিন ও স্টাফ", href: "/dashboard/admin/management/users", icon: <UserCog size={18}/> },
     { name: "টিম লিডার সেটআপ", href: "/dashboard/admin/management/team-leaders", icon: <UserCheck size={18}/> },
+     { name: "লোকেশন ম্যানেজমেন্ট", href: "/dashboard/admin/management/locations", icon: <MapPin size={18}/> },
   ];
 
   // ৩. অন্যান্য কন্ট্রোল
   const otherItems = [
-    { name: "লোকেশন ম্যানেজমেন্ট", href: "/dashboard/admin/locations", icon: <MapPin size={18}/> },
     { name: "ইনভেস্টর প্যানেল", href: "/dashboard/admin/investors", icon: <Briefcase size={18}/> },
     { name: "আর্থিক অডিট", href: "/dashboard/admin/financials", icon: <Landmark size={18}/> },
-    { name: "বড় লোন অনুমোদন", href: "/dashboard/admin/approvals", icon: <ShieldCheck size={18}/> },
+    { name: "গ্রাম টিম লিডার", href: "/dashboard/admin/volunteer-requests", icon: <ShieldCheck size={18}/> },
     { name: "সিস্টেম সেটিংস", href: "/dashboard/admin/settings", icon: <Settings size={18}/> },
-    { name: "গ্লোবাল নোটিশ", href: "/dashboard/admin/notices", icon: <Megaphone size={18}/> },
-    { name: "রিপোর্ট জেনারেটর", href: "#", icon: <FileBox size={18}/> },
   ];
 
   // মেনু রেন্ডার করার হেল্পার ফাংশন

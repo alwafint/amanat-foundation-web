@@ -4,178 +4,203 @@ import React, { useState } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { 
-  User, Phone, MapPin, ArrowRight, ShieldCheck, 
-  Loader2, CheckCircle 
+  User, Phone, MapPin, Loader2, Camera, 
+  FileText, UploadCloud, Home, CheckCircle2 
 } from "lucide-react";
 import { supabase } from '../../lib/supabaseClient';
 
-// গ্রামের তালিকা
-const saghataVillages = [
-  "চক দাতেয়া", "টেপা পদুমসহর", "কুকরাহাট", "ভাঙ্গামোড়", "গটীয়া", "চিথলিয়া", "সানকীভাঙ্গা", "উল্লা", "সাকোয়া", "মান্দুরা", 
-  "ডিমলা পদুমসহর", "দুর্গাপুর", "দলদলিয়া", "ময়মন্তপুর", "বাটী", "বোনারপাড়া", "কালপাণী", "তেলিয়ান", "শ্যামপুর", "বেলতৈল", 
-  "কুখাতাইড়", "চকচকিয়া", "ভরতখালী", "বাঁশহাটা", "পুটিমারী", "ধনারুহা", "খামার ধনারুহা", "মাজবাড়ী", "ধানঘরা", "পূর্ব অনন্তপুর", 
-  "যাদুরতাইড়", "মথরপাড়া", "উল্যা সোনাতলা", "হেলেঞ্চা", "বুরুঙ্গি", "গছাবাড়ী", "অনন্তপুর", "রামনগর", "কচুয়া", "পাঠানপাড়া", 
-  "চন্দনপাট", "ওচমানেরপাড়া", "বালুয়া", "বড়াইকান্দী", "ঝৈলতলা", "পাচিয়ারপুর", "বাউলিয়া", "পচাবস্তা", "ঘুরিদহ", "ঝাড়াবর্ষা", 
-  "যোগীপাড়া", "কচুয়াহাট", "সাথালিয়া", "সেঙ্গুয়া", "হাটবাড়ী", "হাসিলকান্দি", "সাঘাটা", "পবণতাইড়", "কমলপুর", "ভগবানপুর", 
-  "গোরেরপাড়া", "হাপানিয়া", "আগ গড়গড়িয়া", "পাছ গড়গড়িয়া", "নসিরারপাড়া", "সতীতলা", "কিঙ্করপুর", "বাঙ্গাবাড়ী", "চাকুলী", 
-  "জালাল তাইর", "গজারিয়া", "ফলিয়াদিগর", "কামালেরপাড়া", "বারকোনা", "সাহাবাজের পাড়া", "সুজালপুর", "ছিলমানেরপাড়া", 
-  "বাদিনারপাড়া", "থৈকরেরপাড়া", "বেঙ্গারপাড়া", "চিনিরপটল", "কালুরপাড়া", "কুমারপাড়া", "হলদিয়া", "গুয়াবাড়ী", "কানাইপাড়া", 
-  "বেড়া", "গোবিন্দপুর", "আমদিরপাড়া", "আবদুল্লারপাড়া", "শিমুলবাড়ী", "কৈচড়া", "মেছট", "বাজিতনগর", "শিমুলবাড়িয়া", 
-  "বলিয়ারবেড়", "কামারপাড়া", "বগারভিটা", "দৈচড়া", "জাঙ্গালিয়া", "জুমারবাড়ী", "চান্দপাড়া", "মামুদপুর", "বসন্তেরপাড়া", 
-  "কুন্দপাড়া", "কাঠুর", "নলছিয়া", "চেঙ্গালিয়া"
-].sort();
-
-export default function RegisterPage() {
+export default function RegisterTeamLeaderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  
+  // File States
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [nidFile, setNidFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [nidPreview, setNidPreview] = useState<string | null>(null);
+
+  // Form Data State
   const [formData, setFormData] = useState({
     full_name: '',
-    mobile: '',
-    district: 'গাইবান্ধা',
-    upazila: 'সাঘাটা',
-    village: ''
+    whatsapp: '',
+    division: '',
+    district: '',
+    upazila: '',
+    union_name: '',
+    full_address: '', 
   });
 
+  // Handle File Selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'nid') => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const previewUrl = URL.createObjectURL(file);
+      
+      if (type === 'photo') {
+        setPhotoFile(file);
+        setPhotoPreview(previewUrl);
+      } else {
+        setNidFile(file);
+        setNidPreview(previewUrl);
+      }
+    }
+  };
+
+  // Upload Function
+  const uploadFile = async (file: File, folder: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random()}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('survey-images') 
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('survey-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  // Handle Text Change
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Submit Handler
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (!photoFile || !nidFile) {
+        alert("দয়া করে আপনার ছবি এবং এনআইডি কপি আপলোড করুন।");
+        setLoading(false);
+        return;
+      }
+
+      // ১. ছবি আপলোড করা হচ্ছে
+      const photoUrl = await uploadFile(photoFile, 'team_leaders/photos');
+      const nidUrl = await uploadFile(nidFile, 'team_leaders/nids');
+
+      // ২. ডাটাবেজে ইনসার্ট করা হচ্ছে
       const { error } = await supabase.from('members').insert([{
-        ...formData,
+        full_name: formData.full_name,
+        mobile: formData.whatsapp, // মোবাইল কলামে হোয়াটসঅ্যাপ নম্বর সেভ হবে
+        whatsapp: formData.whatsapp,
+        nid_url: nidUrl,
+        photo_url: photoUrl,
+        
+        division: formData.division,
+        district: formData.district,
+        upazila: formData.upazila,
+        union_name: formData.union_name,
+        address: formData.full_address,
+        
         password: '123', // ডিফল্ট পাসওয়ার্ড
-        role: 'member',
-        status: 'pending', // শুরুতে পেন্ডিং থাকবে, স্টাফ এপ্রুভ করবে
-        address: `${formData.village}, ${formData.upazila}, ${formData.district}`
+        role: 'team_leader',
+        status: 'pending',
       }]);
 
       if (error) throw error;
 
-      alert("রেজিস্ট্রেশন সফল হয়েছে! আপনার একাউন্ট যাচাইয়ের জন্য অপেক্ষা করুন।");
+      alert("আবেদন সফল হয়েছে! আমাদের প্রতিনিধি শীঘ্রই আপনার সাথে যোগাযোগ করবেন।");
       router.push('/login');
 
     } catch (err: any) {
-      alert("সমস্যা হয়েছে: " + err.message);
+      console.error(err);
+      alert("ত্রুটি: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // Styles
+  const inputContainerClass = "relative bg-slate-50 border border-slate-200 rounded-xl p-1 focus-within:ring-2 focus-within:ring-[#006A4E] transition-all";
+  const inputClass = "w-full bg-transparent p-3 pl-10 outline-none text-slate-700 font-medium text-sm";
+  const labelClass = "text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block ml-1";
+  const iconClass = "absolute left-3 top-3.5 text-slate-400";
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 md:p-6 font-sans">
+    <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4 font-sans">
       
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-slate-100">
+      <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100">
         
-        {/* Left Branding */}
-        <div className="hidden md:flex w-2/5 bg-emerald-900 p-10 flex-col justify-between relative overflow-hidden text-white">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="relative z-10">
-            <h1 className="text-3xl font-bold mb-2">আমানত ফাউন্ডেশন</h1>
-            <p className="text-emerald-200 text-sm">আপনার বিশ্বস্ত সহযোগী</p>
-          </div>
-          <div className="space-y-4 relative z-10">
-            <div className="flex items-center gap-3">
-               <CheckCircle className="text-yellow-400" size={20}/>
-               <span className="text-sm">সহজ রেজিস্ট্রেশন</span>
-            </div>
-            <div className="flex items-center gap-3">
-               <CheckCircle className="text-yellow-400" size={20}/>
-               <span className="text-sm">দ্রুত সেবা</span>
-            </div>
-            <div className="flex items-center gap-3">
-               <CheckCircle className="text-yellow-400" size={20}/>
-               <span className="text-sm">নিরাপদ তথ্য</span>
-            </div>
-          </div>
-          <p className="text-xs text-emerald-400 mt-8">&copy; ২০২৬ আমানত ফাউন্ডেশন</p>
+        <div className="bg-[#006A4E] p-8 text-center relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+           <h1 className="text-2xl font-black text-white mb-2">টিম লিডার রেজিস্ট্রেশন</h1>
+           <p className="text-emerald-100 text-xs px-6 opacity-90 leading-relaxed">
+             আমানত ফাউন্ডেশনের সাথে আপনার এলাকার উন্নয়নে যুক্ত হতে ফর্মটি পূরণ করুন।
+           </p>
         </div>
 
-        {/* Right Form */}
-        <div className="w-full md:w-3/5 p-6 md:p-12">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-800">নতুন সদস্য হোন</h2>
-            <p className="text-slate-500 text-sm mt-1">মাত্র ১ মিনিটে রেজিস্ট্রেশন সম্পন্ন করুন</p>
-          </div>
-
-          <form onSubmit={handleRegister} className="space-y-5">
+        <div className="p-6 md:p-8">
+          <form onSubmit={handleRegister} className="space-y-6">
             
-            {/* নাম */}
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1.5">আপনার নাম</label>
-              <div className="relative group">
-                <User className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                <input 
-                  type="text" required 
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition" 
-                  placeholder="পুরো নাম লিখুন"
-                  onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                />
+            {/* ১. ব্যক্তিগত তথ্য */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-black text-[#006A4E] uppercase border-b border-emerald-50 pb-2 flex items-center gap-2">
+                <User size={14}/> পরিচয়
+              </h3>
+              
+              <div>
+                <label className={labelClass}>আপনার পূর্ণ নাম</label>
+                <div className={inputContainerClass}>
+                  <User size={18} className={iconClass} />
+                  <input type="text" name="full_name" required className={inputClass} placeholder="নাম লিখুন" onChange={handleChange} />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>হোয়াটসঅ্যাপ নম্বর</label>
+                <div className={inputContainerClass}>
+                  <Phone size={18} className={iconClass} />
+                  <input type="number" name="whatsapp" required className={inputClass} placeholder="017xxxxxxxx" onChange={handleChange} />
+                </div>
               </div>
             </div>
 
-            {/* মোবাইল */}
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1.5">মোবাইল নম্বর</label>
-              <div className="relative group">
-                <Phone className="absolute left-3 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition" size={18} />
-                <input 
-                  type="number" required 
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition" 
-                  placeholder="017xxxxxxxx"
-                  onChange={(e) => setFormData({...formData, mobile: e.target.value})}
-                />
+            {/* ২. আপলোড বক্স */}
+            <div className="grid grid-cols-2 gap-4">
+              <label className={`border-2 border-dashed ${photoPreview ? 'border-[#006A4E] bg-emerald-50' : 'border-slate-300'} aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition relative`}>
+                  {photoPreview ? <img src={photoPreview} className="w-full h-full object-cover"/> : <><Camera size={24} className="text-slate-400 mb-1"/><span className="text-[10px] font-bold text-slate-500">ছবি</span></>}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'photo')} />
+              </label>
+
+              <label className={`border-2 border-dashed ${nidPreview ? 'border-[#006A4E] bg-emerald-50' : 'border-slate-300'} aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition relative`}>
+                  {nidPreview ? <img src={nidPreview} className="w-full h-full object-cover"/> : <><FileText size={24} className="text-slate-400 mb-1"/><span className="text-[10px] font-bold text-slate-500">NID কপি</span></>}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'nid')} />
+              </label>
+            </div>
+
+            {/* ৩. ঠিকানা */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-black text-[#006A4E] uppercase border-b border-emerald-50 pb-2 flex items-center gap-2">
+                <MapPin size={14}/> ঠিকানা
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <input type="text" name="division" required placeholder="বিভাগ" className="p-3 bg-slate-50 border rounded-xl text-sm outline-none focus:border-[#006A4E]" onChange={handleChange} />
+                <input type="text" name="district" required placeholder="জেলা" className="p-3 bg-slate-50 border rounded-xl text-sm outline-none focus:border-[#006A4E]" onChange={handleChange} />
+                <input type="text" name="upazila" required placeholder="উপজেলা" className="p-3 bg-slate-50 border rounded-xl text-sm outline-none focus:border-[#006A4E]" onChange={handleChange} />
+                <input type="text" name="union_name" required placeholder="ইউনিয়ন" className="p-3 bg-slate-50 border rounded-xl text-sm outline-none focus:border-[#006A4E]" onChange={handleChange} />
+              </div>
+
+              <div className="relative">
+                <Home size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                <textarea name="full_address" required rows={2} className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#006A4E] text-sm" placeholder="গ্রাম, পাড়া, ওয়ার্ড নং..." onChange={handleChange} />
               </div>
             </div>
 
-            {/* ঠিকানা (ফিক্সড + ড্রপডাউন) */}
-            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-4">
-               <div className="flex items-center gap-2 mb-2 border-b border-emerald-200 pb-2">
-                 <MapPin size={18} className="text-emerald-600"/>
-                 <span className="text-sm font-bold text-emerald-800">ঠিকানা</span>
-               </div>
-               
-               <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">জেলা</label>
-                    <input type="text" value="গাইবান্ধা" disabled className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">উপজেলা</label>
-                    <input type="text" value="সাঘাটা" disabled className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed" />
-                  </div>
-               </div>
-
-               <div>
-                 <label className="block text-xs font-bold text-slate-700 mb-1">গ্রাম নির্বাচন করুন <span className="text-red-500">*</span></label>
-                 <select 
-                   required 
-                   className="w-full p-3 bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-slate-700"
-                   onChange={(e) => setFormData({...formData, village: e.target.value})}
-                 >
-                   <option value="">তালিকায় ক্লিক করুন...</option>
-                   {saghataVillages.map((v, i) => (
-                     <option key={i} value={v}>{v}</option>
-                   ))}
-                 </select>
-               </div>
-            </div>
-
-            {/* Submit Button */}
-            <button 
-              disabled={loading}
-              className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-emerald-700 transition shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 active:scale-[0.98]"
-            >
-              {loading ? <Loader2 className="animate-spin"/> : "রেজিস্ট্রেশন করুন"} 
-              {!loading && <ArrowRight size={20} />}
+            <button disabled={loading} className="w-full bg-[#006A4E] text-white py-4 rounded-xl font-bold shadow-lg hover:bg-emerald-800 transition flex items-center justify-center gap-2 disabled:opacity-70">
+              {loading ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={20} /> আবেদন জমা দিন</>}
             </button>
-
-            <p className="text-center text-sm text-slate-500 mt-4">
-              আগেই অ্যাকাউন্ট আছে? <Link href="/login" className="text-emerald-600 font-bold hover:underline">লগইন করুন</Link>
-            </p>
 
           </form>
         </div>
-
       </div>
     </div>
   );

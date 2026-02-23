@@ -47,7 +47,7 @@ export default function Hero() {
                 href="/register" 
                 className="w-full sm:w-auto px-8 py-3.5 bg-yellow-500 text-emerald-950 rounded-xl font-bold hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20 flex items-center justify-center gap-2"
               >
-                মেম্বার হোন <ArrowRight size={18} />
+                ভলেন্টিয়ার হোন <ArrowRight size={18} />
               </Link>
               <Link 
                 href="#contact" 
