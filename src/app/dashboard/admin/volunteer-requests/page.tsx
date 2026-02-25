@@ -10,10 +10,10 @@ import { supabase } from '../../../../lib/supabaseClient';
 
 export default function VolunteerRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const[loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null); 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // ১. ডাটা লোড করা
   const fetchRequests = async () => {
@@ -34,7 +34,9 @@ export default function VolunteerRequestsPage() {
     }
   };
 
-  useEffect(() => { fetchRequests(); },[]);
+  useEffect(() => { 
+    fetchRequests(); 
+  },[]);
 
   // ২. অনুমোদন বা বাতিল হ্যান্ডলার এবং WhatsApp মেসেজ
   const handleAction = async (userObj: any, newStatus: 'active' | 'rejected') => {
@@ -57,12 +59,12 @@ export default function VolunteerRequestsPage() {
         alert("নিয়োগ সফল হয়েছে! হোয়াটসঅ্যাপে মেসেজ পাঠানোর জন্য রিডাইরেক্ট করা হচ্ছে...");
         
         // --- WhatsApp Message Logic ---
-        const websiteLink = "https://amanat.ltd/login"; // ⚠️ আপনার ওয়েবসাইটের আসল লগইন লিংক দিন
+        const websiteLink = "https://amanat.ltd/login"; // ওয়েবসাইটের আসল লগইন লিংক
         const message = `স্বাগতম ${userObj.full_name}! 🎉\n\nআমানত ফাউন্ডেশনে আপনার 'টিম লিডার' আবেদনটি সফলভাবে অনুমোদন করা হয়েছে। নিচে আপনার ড্যাশবোর্ডে প্রবেশ করার লগইন ডিটেইলস দেওয়া হলো:\n\n🌐 লগইন লিংক: ${websiteLink}\n📱 মোবাইল নম্বর: ${userObj.mobile}\n🔑 পাসওয়ার্ড: ${userObj.password}\n\nধন্যবাদ!`;
         
         // বাংলাদেশের কান্ট্রি কোড যুক্ত করা (যদি না থাকে)
         let waNumber = userObj.whatsapp;
-        if (waNumber.startsWith('0')) {
+        if (waNumber && waNumber.startsWith('0')) {
           waNumber = '88' + waNumber; 
         }
 
@@ -84,7 +86,7 @@ export default function VolunteerRequestsPage() {
     }
   };
 
-  const filteredRequests = requests.filter(req => 
+  const filteredRequests = requests.filter((req: any) => 
     req.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     req.mobile?.includes(searchTerm) ||
     req.upazila?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -112,7 +114,7 @@ export default function VolunteerRequestsPage() {
             type="text" 
             placeholder="নাম, মোবাইল বা উপজেলা দিয়ে খুঁজুন..." 
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#006A4E] transition"
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
@@ -141,7 +143,7 @@ export default function VolunteerRequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map((req) => (
+                {filteredRequests.map((req: any) => (
                   <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -173,13 +175,13 @@ export default function VolunteerRequestsPage() {
                           <Eye size={14}/> তথ্য
                         </button>
                         <button 
-                          onClick={() => handleAction(req, 'active')} // <- ID এর বদলে পুরো Object পাঠানো হলো
+                          onClick={() => handleAction(req, 'active')} 
                           className="px-3 py-1.5 bg-[#006A4E] text-white rounded-lg font-bold text-xs hover:bg-emerald-800 transition"
                         >
                           অনুমোদন
                         </button>
                         <button 
-                          onClick={() => handleAction(req, 'rejected')} // <- ID এর বদলে পুরো Object পাঠানো হলো
+                          onClick={() => handleAction(req, 'rejected')} 
                           className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg font-bold text-xs hover:bg-rose-100 transition"
                         >
                           বাতিল
@@ -194,7 +196,7 @@ export default function VolunteerRequestsPage() {
 
           {/* MOBILE VIEW: Cards */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
-            {filteredRequests.map((req) => (
+            {filteredRequests.map((req: any) => (
               <div key={req.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-emerald-100 text-[#006A4E] flex items-center justify-center font-bold text-lg">
@@ -232,13 +234,15 @@ export default function VolunteerRequestsPage() {
       {selectedUser && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* ... Modal এর ভেতরের বাকি কোড আগের মতোই থাকবে ... */}
+            
             <div className="bg-[#006A4E] p-6 text-white flex justify-between items-center shrink-0">
                <h3 className="font-bold flex items-center gap-2"><User size={20}/> আবেদনকারীর বিস্তারিত তথ্য</h3>
                <button onClick={() => setSelectedUser(null)} className="p-2 hover:bg-white/20 rounded-full transition"><XCircle size={24}/></button>
             </div>
             
             <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar space-y-8">
+               
+               {/* Basic Details */}
                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                   <div className="col-span-2 md:col-span-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">পূর্ণ নাম</label>
@@ -249,32 +253,75 @@ export default function VolunteerRequestsPage() {
                     <p className="font-bold text-slate-700">{selectedUser.mobile}</p>
                   </div>
                   <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">হোয়াটসঅ্যাপ</label>
+                    <p className="font-bold text-slate-700">{selectedUser.whatsapp}</p>
+                  </div>
+                  <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">পেশা</label>
                     <p className="font-bold text-slate-700 flex items-center gap-1"><Briefcase size={14}/> {selectedUser.profession}</p>
                   </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">মাসিক আয়</label>
+                    <p className="font-bold text-slate-700 flex items-center gap-1"><Banknote size={14}/> {selectedUser.monthly_income} ৳</p>
+                  </div>
                </div>
 
-               {/* NID Images & Address as before */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">সামনের অংশ (Front)</label>
-                    {selectedUser.nid_front_url ? (
-                      <a href={selectedUser.nid_front_url} target="_blank" rel="noreferrer">
-                        <img src={selectedUser.nid_front_url} className="w-full aspect-video object-contain bg-slate-100 rounded-xl" alt="Front" />
-                      </a>
-                    ) : <div className="aspect-video bg-slate-50 flex items-center justify-center text-xs">ছবি নেই</div>}
+               {/* Address Details */}
+               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <h4 className="text-xs font-bold text-[#006A4E] uppercase mb-3 border-b border-emerald-100 pb-2">ঠিকানা</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                     <div>
+                       <span className="text-slate-400 block text-[10px] uppercase font-bold">বিভাগ</span>
+                       <span className="font-semibold text-slate-700">{selectedUser.division}</span>
+                     </div>
+                     <div>
+                       <span className="text-slate-400 block text-[10px] uppercase font-bold">জেলা</span>
+                       <span className="font-semibold text-slate-700">{selectedUser.district}</span>
+                     </div>
+                     <div>
+                       <span className="text-slate-400 block text-[10px] uppercase font-bold">উপজেলা</span>
+                       <span className="font-semibold text-slate-700">{selectedUser.upazila}</span>
+                     </div>
+                     <div>
+                       <span className="text-slate-400 block text-[10px] uppercase font-bold">ইউনিয়ন</span>
+                       <span className="font-semibold text-slate-700">{selectedUser.union_name}</span>
+                     </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">পিছনের অংশ (Back)</label>
-                    {selectedUser.nid_back_url ? (
-                      <a href={selectedUser.nid_back_url} target="_blank" rel="noreferrer">
-                        <img src={selectedUser.nid_back_url} className="w-full aspect-video object-contain bg-slate-100 rounded-xl" alt="Back" />
-                      </a>
-                    ) : <div className="aspect-video bg-slate-50 flex items-center justify-center text-xs">ছবি নেই</div>}
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">বিস্তারিত ঠিকানা</span>
+                    <p className="text-slate-700 italic text-sm">{selectedUser.address}</p>
                   </div>
                </div>
+
+               {/* NID Images */}
+               <div>
+                  <h4 className="text-xs font-bold text-[#006A4E] uppercase mb-3 flex items-center gap-1 border-b border-emerald-50 pb-2">
+                    <CreditCard size={14}/> এনআইডি (NID) কার্ডের কপি
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">সামনের অংশ (Front)</label>
+                        {selectedUser.nid_front_url ? (
+                          <a href={selectedUser.nid_front_url} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm hover:opacity-90 transition">
+                            <img src={selectedUser.nid_front_url} className="w-full h-full object-contain bg-slate-100" alt="NID Front" />
+                          </a>
+                        ) : <div className="aspect-video bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-dashed italic text-xs">ছবি নেই</div>}
+                      </div>
+                      
+                      <div>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">পিছনের অংশ (Back)</label>
+                        {selectedUser.nid_back_url ? (
+                          <a href={selectedUser.nid_back_url} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm hover:opacity-90 transition">
+                            <img src={selectedUser.nid_back_url} className="w-full h-full object-contain bg-slate-100" alt="NID Back" />
+                          </a>
+                        ) : <div className="aspect-video bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-dashed italic text-xs">ছবি নেই</div>}
+                      </div>
+                  </div>
+               </div>
+
             </div>
 
+            {/* Modal Actions */}
             <div className="p-4 md:p-6 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row gap-3 shrink-0">
                <button 
                  disabled={actionLoading === selectedUser.id}
