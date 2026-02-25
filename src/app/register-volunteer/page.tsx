@@ -12,16 +12,16 @@ import { supabase } from '../../lib/supabaseClient';
 
 export default function RegisterTeamLeaderPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const[loading, setLoading] = useState<boolean>(false);
   
   // NID File States (Front and Back)
-  const [nidFrontFile, setNidFrontFile] = useState(null);
-  const [nidFrontPreview, setNidFrontPreview] = useState(null);
-  const[nidBackFile, setNidBackFile] = useState(null);
-  const[nidBackPreview, setNidBackPreview] = useState(null);
+  const [nidFrontFile, setNidFrontFile] = useState<File | null>(null);
+  const [nidFrontPreview, setNidFrontPreview] = useState<string | null>(null);
+  const[nidBackFile, setNidBackFile] = useState<File | null>(null);
+  const[nidBackPreview, setNidBackPreview] = useState<string | null>(null);
 
   // --- Geo Location State (IDs for Filtering) ---
-  const[geoState, setGeoState] = useState({
+  const [geoState, setGeoState] = useState({
     division_id: '',
     district_id: '',
     upazila_id: '',
@@ -51,7 +51,7 @@ export default function RegisterTeamLeaderPage() {
   const unionList = unions.filter(u => u.upazilla_id === geoState.upazila_id);
 
   // --- Handlers ---
-  const handleDivisionChange = (e) => {
+  const handleDivisionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const divId = e.target.value;
     const divObj = divisions.find(d => d.id === divId);
     
@@ -65,7 +65,7 @@ export default function RegisterTeamLeaderPage() {
     });
   };
 
-  const handleDistrictChange = (e) => {
+  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const distId = e.target.value;
     const distObj = districts.find(d => d.id === distId);
 
@@ -78,7 +78,7 @@ export default function RegisterTeamLeaderPage() {
     });
   };
 
-  const handleUpazilaChange = (e) => {
+  const handleUpazilaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const upaId = e.target.value;
     const upaObj = upazilas.find(u => u.id === upaId);
 
@@ -90,7 +90,7 @@ export default function RegisterTeamLeaderPage() {
     });
   };
 
-  const handleUnionChange = (e) => {
+  const handleUnionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const uniId = e.target.value;
     const uniObj = unions.find(u => u.id === uniId);
     
@@ -101,14 +101,14 @@ export default function RegisterTeamLeaderPage() {
     });
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === "ward_no" && value.length > 2) return; 
     setFormData({ ...formData,[name]: value });
   };
 
   // NID Front File Handler
-  const handleNidFrontChange = (e) => {
+  const handleNidFrontChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setNidFrontFile(file);
@@ -117,7 +117,7 @@ export default function RegisterTeamLeaderPage() {
   };
 
   // NID Back File Handler
-  const handleNidBackChange = (e) => {
+  const handleNidBackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setNidBackFile(file);
@@ -126,7 +126,7 @@ export default function RegisterTeamLeaderPage() {
   };
 
   // সাবমিট হ্যান্ডলার
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -166,7 +166,7 @@ export default function RegisterTeamLeaderPage() {
       // ৪. ৬-ডিজিটের র‍্যান্ডম পাসওয়ার্ড জেনারেট করা
       const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString();
       
-      // ৪. ডাটাবেজে ইনসার্ট (আলাদা টেবিল: team_leader_applications)
+      // ৫. ডাটাবেজে ইনসার্ট (আলাদা টেবিল: team_leader_applications)
       const { error } = await supabase.from('team_leader_applications').insert([{
         full_name: formData.full_name,
         profession: formData.profession,
@@ -194,7 +194,7 @@ export default function RegisterTeamLeaderPage() {
       alert("আবেদন সফল হয়েছে! প্রতিনিধি যোগাযোগ করবেন।");
       router.push('/login');
 
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       alert("ত্রুটি: " + err.message);
     } finally {
