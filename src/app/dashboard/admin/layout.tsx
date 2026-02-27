@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const[sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -25,32 +25,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [router]);
 
   const handleLogout = () => {
-    if (confirm("আপনি কি অ্যাডমিন প্যানেল থেকে লগ আউট করতে চান?")) {
+    // TypeScript Warning এড়ানোর জন্য window.confirm ব্যবহার করা হয়েছে
+    if (window.confirm("আপনি কি অ্যাডমিন প্যানেল থেকে লগ আউট করতে চান?")) {
       localStorage.removeItem('user');
       router.push('/login');
     }
   };
 
   // ১. মেইন কন্ট্রোল আইটেম
-  const mainItems = [
+  const mainItems =[
     { name: "মাস্টার ড্যাশবোর্ড", href: "/dashboard/admin", icon: <LayoutDashboard size={18}/> },
-    
   ];
 
   // ২. আপনার কাঙ্ক্ষিত ৩টি পেজ (ম্যানেজমেন্ট ক্যাটাগরি)
-  const managementItems = [
+  const managementItems =[
     { name: "ব্রাঞ্চ ম্যানেজমেন্ট", href: "/dashboard/admin/management/branches", icon: <Building size={18}/> },
     { name: "অ্যাডমিন ও স্টাফ", href: "/dashboard/admin/management/users", icon: <UserCog size={18}/> },
-    { name: "টিম লিডার সেটআপ", href: "/dashboard/admin/management/team-leaders", icon: <UserCheck size={18}/> },
-     { name: "লোকেশন ম্যানেজমেন্ট", href: "/dashboard/admin/management/locations", icon: <MapPin size={18}/> },
-  ];
-
-  // ৩. অন্যান্য কন্ট্রোল
-  const otherItems = [
-    { name: "ইনভেস্টর প্যানেল", href: "/dashboard/admin/investors", icon: <Briefcase size={18}/> },
-    { name: "আর্থিক অডিট", href: "/dashboard/admin/financials", icon: <Landmark size={18}/> },
-    { name: "গ্রাম টিম লিডার", href: "/dashboard/admin/volunteer-requests", icon: <ShieldCheck size={18}/> },
-    { name: "সিস্টেম সেটিংস", href: "/dashboard/admin/settings", icon: <Settings size={18}/> },
+    { name: "উনিয়ন টিম লিডার", href: "/dashboard/admin/management/volunteer-requests", icon: <ShieldCheck size={18}/> },
   ];
 
   // মেনু রেন্ডার করার হেল্পার ফাংশন
@@ -100,16 +91,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="space-y-1">{renderNavLinks(mainItems)}</div>
           </div>
 
-          {/* Section 2: Management (এখানে আপনার সেই ৩টি পেজ) */}
+          {/* Section 2: Management */}
           <div>
             <p className="px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">ম্যানেজমেন্ট</p>
             <div className="space-y-1">{renderNavLinks(managementItems)}</div>
-          </div>
-
-          {/* Section 3: Others */}
-          <div>
-            <p className="px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">সিস্টেম ও অডিট</p>
-            <div className="space-y-1">{renderNavLinks(otherItems)}</div>
           </div>
 
         </nav>

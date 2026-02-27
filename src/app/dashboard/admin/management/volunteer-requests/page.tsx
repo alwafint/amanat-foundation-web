@@ -4,25 +4,26 @@ import React, { useEffect, useState } from 'react';
 import { 
   User, Search, XCircle, Eye, 
   Phone, MapPin, Loader2, CreditCard, 
-  ShieldCheck, Briefcase, Banknote
+  ShieldCheck, Briefcase, Banknote, CheckCircle2
 } from "lucide-react";
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase } from '../../../../../lib/supabaseClient'; 
+import { divisions, districts, upazilas, unions } from '../../../../../lib/bd-locations';
 
 export default function VolunteerRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
-  const[loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null); 
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  // ১. ডাটা লোড করা
+  // ১. ডাটা লোড করা (Pending এবং Active উভয় ডাটাই আসবে, যাতে অনুমোদনের পর ডাটা পেজে থেকে যায়)
   const fetchRequests = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('team_leader_applications')
         .select('*')
-        .eq('status', 'pending')
+        .in('status', ['pending', 'active']) // অপেক্ষমান এবং অনুমোদিত উভয় ডাটাই দেখানো হবে
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -38,47 +39,57 @@ export default function VolunteerRequestsPage() {
     fetchRequests(); 
   },[]);
 
-  // ২. অনুমোদন বা বাতিল হ্যান্ডলার এবং WhatsApp মেসেজ
+  // ২. অনুমোদন বা বাতিল (ডিলেট) হ্যান্ডলার এবং Telegram মেসেজ
   const handleAction = async (userObj: any, newStatus: 'active' | 'rejected') => {
     const confirmMsg = newStatus === 'active' 
-      ? "আপনি কি এই টিম লিডারকে নিয়োগ দিতে চান? অনুমোদন দিলে হোয়াটসঅ্যাপ মেসেজ পাঠানোর উইন্ডো ওপেন হবে।" 
-      : "আপনি কি এই আবেদনটি বাতিল করতে চান?";
+      ? "আপনি কি এই ইউনিয়ন লিডারকে নিয়োগ দিতে চান? অনুমোদন দিলে টেলিগ্রাম মেসেজ পাঠানোর উইন্ডো ওপেন হবে।" 
+      : "আপনি কি এই লিডারের ডাটা বাতিল করে ড্যাশবোর্ড ও ডাটাবেজ থেকে সম্পূর্ণ মুছে ফেলতে চান?";
       
     if (!window.confirm(confirmMsg)) return;
 
     setActionLoading(userObj.id);
     try {
-      const { error } = await supabase
-        .from('team_leader_applications')
-        .update({ status: newStatus })
-        .eq('id', userObj.id);
-
-      if (error) throw error;
-      
       if (newStatus === 'active') {
-        alert("নিয়োগ সফল হয়েছে! হোয়াটসঅ্যাপে মেসেজ পাঠানোর জন্য রিডাইরেক্ট করা হচ্ছে...");
+        // অনুমোদন করলে স্ট্যাটাস আপডেট হবে (ডাটা ডিলিট হবে না)
+        const { error } = await supabase
+          .from('team_leader_applications')
+          .update({ status: newStatus })
+          .eq('id', userObj.id);
+
+        if (error) throw error;
         
-        // --- WhatsApp Message Logic ---
+        alert("নিয়োগ সফল হয়েছে! টেলিগ্রামে মেসেজ পাঠানোর জন্য রিডাইরেক্ট করা হচ্ছে...");
+        
+        // --- Telegram Message Logic ---
         const websiteLink = "https://amanat.ltd/login"; // ওয়েবসাইটের আসল লগইন লিংক
-        const message = `স্বাগতম ${userObj.full_name}! 🎉\n\nআমানত ফাউন্ডেশনে আপনার 'টিম লিডার' আবেদনটি সফলভাবে অনুমোদন করা হয়েছে। নিচে আপনার ড্যাশবোর্ডে প্রবেশ করার লগইন ডিটেইলস দেওয়া হলো:\n\n🌐 লগইন লিংক: ${websiteLink}\n📱 মোবাইল নম্বর: ${userObj.mobile}\n🔑 পাসওয়ার্ড: ${userObj.password}\n\nধন্যবাদ!`;
+        const message = `স্বাগতম ${userObj.full_name}! 🎉\n\nআমানত ফাউন্ডেশনে আপনার 'ইউনিয়ন লিডার' আবেদনটি সফলভাবে অনুমোদন করা হয়েছে। নিচে আপনার ড্যাশবোর্ডে প্রবেশ করার লগইন ডিটেইলস দেওয়া হলো:\n\n🌐 লগইন লিংক: ${websiteLink}\n📱 মোবাইল নম্বর: ${userObj.mobile}\n🔑 পাসওয়ার্ড: ${userObj.password}\n\nধন্যবাদ!`;
         
         // বাংলাদেশের কান্ট্রি কোড যুক্ত করা (যদি না থাকে)
-        let waNumber = userObj.whatsapp;
-        if (waNumber && waNumber.startsWith('0')) {
-          waNumber = '88' + waNumber; 
+        let tgNumber = userObj.telegram || userObj.mobile; 
+        if (tgNumber && tgNumber.startsWith('0')) {
+          tgNumber = '88' + tgNumber; 
         }
 
-        // WhatsApp Web/App লিংক তৈরি
-        const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+        // Telegram Web/App লিংক তৈরি
+        const tgUrl = `https://t.me/+${tgNumber}?text=${encodeURIComponent(message)}`;
         
-        // নতুন ট্যাবে হোয়াটসঅ্যাপ ওপেন হবে
-        window.open(waUrl, '_blank');
-      } else {
-        alert("আবেদন বাতিল করা হয়েছে।");
+        // নতুন ট্যাবে টেলিগ্রাম ওপেন হবে
+        window.open(tgUrl, '_blank');
+        
+      } else if (newStatus === 'rejected') {
+        // বাতিল করলে ডাটাবেজ থেকে সম্পূর্ণ মুছে যাবে (Delete)
+        const { error } = await supabase
+          .from('team_leader_applications')
+          .delete()
+          .eq('id', userObj.id);
+
+        if (error) throw error;
+        alert("ডাটা সফলভাবে বাতিল এবং সিস্টেম থেকে মুছে ফেলা হয়েছে।");
       }
 
       setSelectedUser(null);
-      fetchRequests(); // লিস্ট রিফ্রেশ করা
+      fetchRequests(); // লিস্ট রিফ্রেশ করা হবে
+      
     } catch (err: any) {
       alert("সমস্যা হয়েছে: " + err.message);
     } finally {
@@ -98,12 +109,12 @@ export default function VolunteerRequestsPage() {
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <ShieldCheck className="text-[#006A4E]" size={28}/> নতুন লিডার নিয়োগ প্যানেল
+            <ShieldCheck className="text-[#006A4E]" size={28}/> ইউনিয়ন লিডার প্যানেল
           </h2>
-          <p className="text-sm text-slate-500 mt-1">মাঠ পর্যায় থেকে আসা টিম লিডারদের আবেদন যাচাই করুন</p>
+          <p className="text-sm text-slate-500 mt-1">মাঠ পর্যায় থেকে আসা লিডারদের আবেদন ও লিস্ট পরিচালনা করুন</p>
         </div>
         <div className="bg-emerald-50 text-[#006A4E] px-4 py-2 rounded-xl font-bold text-sm border border-emerald-100">
-            অপেক্ষমান আবেদন: {requests.length} টি
+            সর্বমোট লিডার: {requests.length} জন
         </div>
       </div>
 
@@ -122,12 +133,12 @@ export default function VolunteerRequestsPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="animate-spin text-[#006A4E]" size={32} />
-          <p className="text-slate-400 font-medium">আবেদনপত্রগুলো লোড হচ্ছে...</p>
+          <p className="text-slate-400 font-medium">ডাটা লোড হচ্ছে...</p>
         </div>
       ) : filteredRequests.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm">
            <ShieldCheck size={64} className="mx-auto text-slate-100 mb-4"/>
-           <h3 className="text-xl font-bold text-slate-300 italic">কোনো অপেক্ষমান আবেদন নেই</h3>
+           <h3 className="text-xl font-bold text-slate-300 italic">কোনো ডাটা পাওয়া যায়নি</h3>
         </div>
       ) : (
         <>
@@ -136,9 +147,9 @@ export default function VolunteerRequestsPage() {
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase text-xs tracking-wider">
-                  <th className="px-6 py-4 font-bold">আবেদনকারীর নাম ও পেশা</th>
+                  <th className="px-6 py-4 font-bold">নাম ও পেশা</th>
                   <th className="px-6 py-4 font-bold">যোগাযোগ</th>
-                  <th className="px-6 py-4 font-bold">ঠিকানা (উপজেলা ও জেলা)</th>
+                  <th className="px-6 py-4 font-bold">ঠিকানা</th>
                   <th className="px-6 py-4 font-bold text-center">অ্যাকশন</th>
                 </tr>
               </thead>
@@ -151,7 +162,15 @@ export default function VolunteerRequestsPage() {
                           {req.full_name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-800">{req.full_name}</p>
+                          <p className="font-bold text-slate-800 flex items-center gap-2">
+                            {req.full_name}
+                            {/* Status Badge */}
+                            {req.status === 'active' ? (
+                              <span className="bg-emerald-100 text-[#006A4E] px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1"><CheckCircle2 size={10}/> অনুমোদিত</span>
+                            ) : (
+                              <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">অপেক্ষমান</span>
+                            )}
+                          </p>
                           <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                             <Briefcase size={12}/> {req.profession}
                           </p>
@@ -160,7 +179,7 @@ export default function VolunteerRequestsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-slate-700">{req.mobile}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">WA: {req.whatsapp}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">TG: {req.telegram}</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-slate-700">{req.upazila}, {req.district}</p>
@@ -174,17 +193,22 @@ export default function VolunteerRequestsPage() {
                         >
                           <Eye size={14}/> তথ্য
                         </button>
-                        <button 
-                          onClick={() => handleAction(req, 'active')} 
-                          className="px-3 py-1.5 bg-[#006A4E] text-white rounded-lg font-bold text-xs hover:bg-emerald-800 transition"
-                        >
-                          অনুমোদন
-                        </button>
+                        
+                        {/* যদি Pending থাকে তবেই অনুমোদন বাটন দেখাবে */}
+                        {req.status === 'pending' && (
+                          <button 
+                            onClick={() => handleAction(req, 'active')} 
+                            className="px-3 py-1.5 bg-[#006A4E] text-white rounded-lg font-bold text-xs hover:bg-emerald-800 transition"
+                          >
+                            অনুমোদন
+                          </button>
+                        )}
+
                         <button 
                           onClick={() => handleAction(req, 'rejected')} 
                           className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg font-bold text-xs hover:bg-rose-100 transition"
                         >
-                          বাতিল
+                          বাতিল ও মুছুন
                         </button>
                       </div>
                     </td>
@@ -203,8 +227,17 @@ export default function VolunteerRequestsPage() {
                     {req.full_name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 leading-tight">{req.full_name}</h4>
-                    <p className="text-xs text-slate-500 mt-1">{req.profession}</p>
+                    <h4 className="font-bold text-slate-800 leading-tight flex items-center gap-2">
+                      {req.full_name}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-xs text-slate-500">{req.profession}</p>
+                      {req.status === 'active' ? (
+                        <span className="bg-emerald-100 text-[#006A4E] px-1.5 py-0.5 rounded text-[10px] font-bold">অনুমোদিত</span>
+                      ) : (
+                        <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">অপেক্ষমান</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -218,11 +251,18 @@ export default function VolunteerRequestsPage() {
                     <Eye size={14}/> সম্পূর্ণ তথ্য দেখুন
                   </button>
                   <button onClick={() => handleAction(req, 'rejected')} className="col-span-1 py-2.5 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs hover:bg-rose-100 transition">
-                    বাতিল
+                    মুছুন
                   </button>
-                  <button onClick={() => handleAction(req, 'active')} className="col-span-2 py-2.5 bg-[#006A4E] text-white rounded-xl font-bold text-xs hover:opacity-90 transition shadow-sm">
-                    নিয়োগ দিন
-                  </button>
+                  
+                  {req.status === 'pending' ? (
+                    <button onClick={() => handleAction(req, 'active')} className="col-span-2 py-2.5 bg-[#006A4E] text-white rounded-xl font-bold text-xs hover:opacity-90 transition shadow-sm">
+                      নিয়োগ দিন
+                    </button>
+                  ) : (
+                    <div className="col-span-2 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs flex items-center justify-center gap-1 cursor-default">
+                      <CheckCircle2 size={14}/> ইতোমধ্যে অনুমোদিত
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -236,7 +276,7 @@ export default function VolunteerRequestsPage() {
           <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
             <div className="bg-[#006A4E] p-6 text-white flex justify-between items-center shrink-0">
-               <h3 className="font-bold flex items-center gap-2"><User size={20}/> আবেদনকারীর বিস্তারিত তথ্য</h3>
+               <h3 className="font-bold flex items-center gap-2"><User size={20}/> লিডারের বিস্তারিত তথ্য</h3>
                <button onClick={() => setSelectedUser(null)} className="p-2 hover:bg-white/20 rounded-full transition"><XCircle size={24}/></button>
             </div>
             
@@ -253,8 +293,8 @@ export default function VolunteerRequestsPage() {
                     <p className="font-bold text-slate-700">{selectedUser.mobile}</p>
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">হোয়াটসঅ্যাপ</label>
-                    <p className="font-bold text-slate-700">{selectedUser.whatsapp}</p>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">টেলিগ্রাম</label>
+                    <p className="font-bold text-slate-700">{selectedUser.telegram}</p>
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">পেশা</label>
@@ -328,15 +368,19 @@ export default function VolunteerRequestsPage() {
                  onClick={() => handleAction(selectedUser, 'rejected')}
                  className="flex-1 py-3.5 bg-white text-rose-600 border border-rose-200 rounded-xl font-bold hover:bg-rose-50 transition"
                >
-                  আবেদন বাতিল করুন
+                  {selectedUser.status === 'active' ? "নিয়োগ বাতিল ও মুছে ফেলুন" : "আবেদন বাতিল করুন"}
                </button>
-               <button 
-                 disabled={actionLoading === selectedUser.id}
-                 onClick={() => handleAction(selectedUser, 'active')}
-                 className="flex-1 py-3.5 bg-[#006A4E] text-white rounded-xl font-bold shadow-md hover:opacity-95 transition"
-               >
-                  {actionLoading === selectedUser.id ? "প্রসেসিং..." : "আবেদন অনুমোদন করুন"}
-               </button>
+               
+               {/* শুধুমাত্র Pending ইউজারদের জন্য অনুমোদন বাটন দেখাবে */}
+               {selectedUser.status === 'pending' && (
+                 <button 
+                   disabled={actionLoading === selectedUser.id}
+                   onClick={() => handleAction(selectedUser, 'active')}
+                   className="flex-1 py-3.5 bg-[#006A4E] text-white rounded-xl font-bold shadow-md hover:opacity-95 transition"
+                 >
+                    {actionLoading === selectedUser.id ? "প্রসেসিং..." : "আবেদন অনুমোদন করুন"}
+                 </button>
+               )}
             </div>
           </div>
         </div>

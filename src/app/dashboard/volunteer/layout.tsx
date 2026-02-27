@@ -146,39 +146,6 @@ export default function VolunteerLayout({ children }: { children: React.ReactNod
               </Link>
             </div>
           )}
-
-          {/* কার্যক্রম ও রিপোর্ট */}
-          <div className="mb-1">
-            <button onClick={() => setIsTaskMenuOpen(!isTaskMenuOpen)}
-              className={`flex items-center justify-between w-full p-3 rounded-xl transition font-bold text-sm ${pathname.includes('/tasks') || pathname.includes('/reports') ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800"}`}>
-              <div className="flex items-center gap-3">
-                <Target size={20} />
-                <span>কার্যক্রম ও রিপোর্ট</span>
-              </div>
-              {isTaskMenuOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            
-            {isTaskMenuOpen && (
-              <div className="ml-4 mt-1 border-l-2 border-slate-700 pl-2 space-y-1">
-                <Link href="/dashboard/volunteer/tasks" onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 w-full p-2.5 rounded-lg transition font-medium text-xs ${pathname === "/dashboard/volunteer/tasks" ? "text-[#FFB800] bg-white/5 shadow-sm" : "text-slate-400 hover:text-white"}`}>
-                  <ClipboardList size={16}/>
-                  <span>চলমান কাজ</span>
-                </Link>
-                <Link href="/dashboard/volunteer/reports" onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 w-full p-2.5 rounded-lg transition font-medium text-xs ${pathname === "/dashboard/volunteer/reports" ? "text-[#FFB800] bg-white/5 shadow-sm" : "text-slate-400 hover:text-white"}`}>
-                  <FileText size={16}/>
-                  <span>রিপোর্ট ইতিহাস</span>
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <Link href="/dashboard/volunteer/benefits" onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 w-full p-3 rounded-xl transition font-bold text-sm mt-2 ${pathname === "/dashboard/volunteer/benefits" ? "bg-[#006A4E] text-white shadow-lg" : "text-slate-400 hover:bg-slate-800"}`}>
-            <Gift size={20}/>
-            <span>সুযোগ-সুবিধা</span>
-          </Link>
         </nav>
 
         {/* User Footer */}

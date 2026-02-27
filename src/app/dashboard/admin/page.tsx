@@ -7,25 +7,26 @@ import {
   Loader2, Landmark, Users, Wallet, 
   ShieldCheck, Globe, Building2, Plus, X,
   Activity, Calendar, DollarSign, ArrowRight, ChevronRight,
-  MapPin // <-- এখানে MapPin যোগ করা হয়েছে
+  MapPin, UserCheck // <-- UserCheck আইকন ভলান্টিয়ারের জন্য যুক্ত করা হলো
 } from "lucide-react";
 import { supabase } from '../../../lib/supabaseClient';
 
 export default function AdminMasterDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const[user, setUser] = useState<any>(null);
   
   const [stats, setStats] = useState({
-    totalCapital: 0,
-    totalProfit: 0,
-    members: 0,
     totalBranches: 0,
-    pendingApprovals: 0
+    totalUsers: 0,
+    totalTeamLeaders: 0,
+    totalVolunteers: 0,
+    totalCapital: 0,
+    totalProfit: 0
   });
 
   const [branches, setBranches] = useState<any[]>([]);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const[recentActivities, setRecentActivities] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newBranch, setNewBranch] = useState({ name: '', code: '', address: '' });
   const [createLoading, setCreateLoading] = useState(false);
@@ -46,40 +47,21 @@ export default function AdminMasterDashboard() {
   const fetchGlobalData = async () => {
     setLoading(true);
     try {
+      // ব্রাঞ্চের ডাটা
       const { data: branchData } = await supabase.from('branches').select('*');
-      const { count: memberCount } = await supabase.from('members').select('*', { count: 'exact', head: true });
-      const { count: pendingCount } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'pending_management');
       
-      const { data: investments } = await supabase
-        .from('bookings')
-        .select('quantity')
-        .eq('service_category', 'Investment')
-        .eq('status', 'approved');
+      // মেম্বারদের ডাটা (Role অনুযায়ী কাউন্ট করার জন্য)
+      const { data: membersData } = await supabase.from('members').select('role');
       
-      let totalInv = 0;
-      if (investments) {
-        investments.forEach((item: any) => {
-          const val = item.quantity ? parseInt(item.quantity.toString().replace(/[^0-9]/g, '')) : 0;
-          totalInv += isNaN(val) ? 0 : val;
-        });
+      let usersCount = 0;
+      let teamLeadersCount = 0;
+      let volunteersCount = 0;
+
+      if (membersData) {
+        usersCount = membersData.length; // মোট ইউজার (সব রোল মিলে)
+        teamLeadersCount = membersData.filter(m => m.role === 'team_leader').length; // শুধু টিম লিডার
+        volunteersCount = membersData.filter(m => m.role === 'volunteer').length; // শুধু ভলান্টিয়ার
       }
-
-      const { data: recent } = await supabase
-        .from('bookings')
-        .select('member_name, service_category, created_at, status')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      setBranches(branchData || []);
-      setRecentActivities(recent || []);
-      
-      setStats({
-        totalBranches: branchData?.length || 0,
-        members: memberCount || 0,
-        totalCapital: totalInv,
-        totalProfit: totalInv * 0.10,
-        pendingApprovals: pendingCount || 0
-      });
 
     } catch (error) {
       console.error("Data fetch error:", error);
@@ -122,16 +104,14 @@ export default function AdminMasterDashboard() {
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">সিস্টেম মাস্টার ড্যাশবোর্ড</h2>
           <p className="text-slate-500 mt-1 font-medium">স্বাগতম, {user?.full_name}</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="bg-[#006A4E] text-white px-6 py-3 rounded-xl font-bold flex gap-2 shadow-lg hover:bg-emerald-800 transition text-sm">
-           <Plus size={18}/> নতুন শাখা
-        </button>
       </div>
 
+      {/* --- Updated Stat Boxes --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
          <StatBox label="মোট ব্রাঞ্চ" value={stats.totalBranches} icon={<Building2/>} color="bg-blue-50 text-blue-600"/>
-         <StatBox label="মোট মেম্বার" value={stats.members} icon={<Users/>} color="bg-purple-50 text-purple-600"/>
-         <StatBox label="মোট বিনিয়োগ" value={`৳ ${stats.totalCapital.toLocaleString()}`} icon={<Wallet/>} color="bg-emerald-50 text-emerald-600"/>
-         <StatBox label="পেন্ডিং কাজ" value={stats.pendingApprovals} icon={<ShieldCheck/>} color="bg-amber-50 text-amber-600"/>
+         <StatBox label="মোট ইউজার" value={stats.totalUsers} icon={<Users/>} color="bg-purple-50 text-purple-600"/>
+         <StatBox label="মোট টিম লিডার" value={stats.totalTeamLeaders} icon={<ShieldCheck/>} color="bg-emerald-50 text-emerald-600"/>
+         <StatBox label="মোট ভলান্টিয়ার" value={stats.totalVolunteers} icon={<UserCheck/>} color="bg-amber-50 text-amber-600"/>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -147,15 +127,6 @@ export default function AdminMasterDashboard() {
                         <p className="text-sm text-slate-500 mt-3 flex items-center gap-1"><MapPin size={14}/> {branch.address}</p>
                     </div>
                 ))}
-            </div>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6">
-            <div className="bg-[#006A4E] text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden text-center group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><DollarSign size={100}/></div>
-                <p className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">নিট মুনাফা (১০%)</p>
-                <h3 className="text-3xl font-black">৳ {stats.totalProfit.toLocaleString()}</h3>
-                <button className="mt-6 w-full py-3 bg-white text-[#006A4E] rounded-xl font-bold text-sm shadow-lg hover:bg-slate-50 transition">ডিটেইল রিপোর্ট</button>
             </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { divisions, districts, upazilas, unions } from '../../lib/bd-locations'; 
 import { 
   User, Phone, MapPin, Loader2, Camera, 
-  Briefcase, Banknote, CheckCircle2, Hash, Tent, CreditCard 
+  Briefcase, Banknote, CheckCircle2, Hash, Tent, CreditCard, Download 
 } from "lucide-react";
 import { supabase } from '../../lib/supabaseClient'; 
 
@@ -15,8 +15,8 @@ export default function RegisterTeamLeaderPage() {
   const[loading, setLoading] = useState<boolean>(false);
   
   // NID File States (Front and Back)
-  const [nidFrontFile, setNidFrontFile] = useState<File | null>(null);
-  const [nidFrontPreview, setNidFrontPreview] = useState<string | null>(null);
+  const[nidFrontFile, setNidFrontFile] = useState<File | null>(null);
+  const[nidFrontPreview, setNidFrontPreview] = useState<string | null>(null);
   const[nidBackFile, setNidBackFile] = useState<File | null>(null);
   const[nidBackPreview, setNidBackPreview] = useState<string | null>(null);
 
@@ -33,7 +33,7 @@ export default function RegisterTeamLeaderPage() {
     full_name: '',
     profession: '',
     monthly_income: '',
-    whatsapp: '',
+    telegram: '', 
     
     division: '',      
     district: '',      
@@ -41,7 +41,7 @@ export default function RegisterTeamLeaderPage() {
     union_name: '',    
     ward_no: '',
     village: '',
-    full_address: '', // এটি এখন Optional
+    full_address: '', 
   });
 
   // --- Filtering Logic (ডাটা ফিল্টার করা) ---
@@ -166,16 +166,16 @@ export default function RegisterTeamLeaderPage() {
       // ৪. ৬-ডিজিটের র‍্যান্ডম পাসওয়ার্ড জেনারেট করা
       const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString();
       
-      // ৫. ডাটাবেজে ইনসার্ট (আলাদা টেবিল: team_leader_applications)
+      // ৫. ডাটাবেজে ইনসার্ট
       const { error } = await supabase.from('team_leader_applications').insert([{
         full_name: formData.full_name,
         profession: formData.profession,
         monthly_income: formData.monthly_income,
-        mobile: formData.whatsapp,
-        whatsapp: formData.whatsapp,
+        mobile: formData.telegram,     // mobile ফিল্ডেও টেলিগ্রাম নাম্বার পাঠানো হলো
+        telegram: formData.telegram,   // telegram ফিল্ডে টেলিগ্রাম নাম্বার পাঠানো হলো
         
-        nid_front_url: nidFrontUrl,  // NID Front URL
-        nid_back_url: nidBackUrl,    // NID Back URL
+        nid_front_url: nidFrontUrl,  
+        nid_back_url: nidBackUrl,    
         
         division: formData.division,     
         district: formData.district,     
@@ -185,7 +185,7 @@ export default function RegisterTeamLeaderPage() {
         village: formData.village,
         address: completeAddress,
         
-        password: generatedPassword, // এখানে নতুন পাসওয়ার্ডটি দেওয়া হলো
+        password: generatedPassword, 
         role: 'team_leader',
         status: 'pending',
       }]);
@@ -229,7 +229,7 @@ export default function RegisterTeamLeaderPage() {
             {/* ১. ব্যক্তিগত তথ্য */}
             <div className="space-y-4">
               <h3 className="text-xs font-black text-[#006A4E] uppercase border-b border-emerald-50 pb-2 flex items-center gap-2">
-                <User size={14}/> পরিচয়
+                <User size={14}/> পরিচয়
               </h3>
               
               <div>
@@ -258,10 +258,22 @@ export default function RegisterTeamLeaderPage() {
               </div>
 
               <div>
-                <label className={labelClass}>হোয়াটসঅ্যাপ নম্বর <RequiredMark/></label>
+                <label className={labelClass}>টেলিগ্রাম নম্বর <RequiredMark/></label>
                 <div className={inputContainerClass}>
                   <Phone size={18} className={iconClass} />
-                  <input type="number" name="whatsapp" required className={inputClass} placeholder="017xxxxxxxx" onChange={handleChange} />
+                  <input type="number" name="telegram" required className={inputClass} placeholder="017xxxxxxxx" onChange={handleChange} />
+                </div>
+                {/* টেলিগ্রাম ডাউনলোড বাটন */}
+                <div className="mt-2.5">
+                  <a 
+                    href="https://play.google.com/store/apps/details?id=org.telegram.messenger" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="inline-flex items-center justify-center gap-1.5 bg-[#EAF5FA] text-[#0088CC] px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-[#D4EAF4] transition-colors border border-[#BDE0F2]"
+                  >
+                    <Download size={16}/> 
+                    টেলিগ্রাম অ্যাপ ডাউনলোড করুন
+                  </a>
                 </div>
               </div>
             </div>
@@ -342,39 +354,6 @@ export default function RegisterTeamLeaderPage() {
                       <option key={uni.id} value={uni.id}>{uni.bn_name}</option>
                     ))}
                   </select>
-                </div>
-              </div>
-
-              {/* ওয়ার্ড ও গ্রাম */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                   <label className={labelClass}>ওয়ার্ড নং (১-৯৯) <RequiredMark/></label>
-                   <div className={inputContainerClass}>
-                    <Hash size={18} className={iconClass} />
-                    <input 
-                      type="number" 
-                      name="ward_no" 
-                      required 
-                      className={inputClass} 
-                      placeholder="নং" 
-                      value={formData.ward_no} 
-                      onChange={handleChange} 
-                    />
-                   </div>
-                </div>
-                <div>
-                   <label className={labelClass}>গ্রামের নাম <RequiredMark/></label>
-                   <div className={inputContainerClass}>
-                    <Tent size={18} className={iconClass} />
-                    <input 
-                      type="text" 
-                      name="village" 
-                      required 
-                      className={inputClass} 
-                      placeholder="গ্রাম লিখুন" 
-                      onChange={handleChange} 
-                    />
-                   </div>
                 </div>
               </div>
             </div>

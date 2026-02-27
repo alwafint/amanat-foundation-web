@@ -7,28 +7,11 @@ import {
 } from "lucide-react";
 import { supabase } from '../../../../../lib/supabaseClient';
 
-// সাঘাটার গ্রাম তালিকা
-const saghataVillages = [
-  "চক দাতেয়া", "টেপা পদুমসহর", "কুকরাহাট", "ভাঙ্গামোড়", "গটীয়া", "চিথলিয়া", "সানকীভাঙ্গা", "উল্লা", "সাকোয়া", "মান্দুরা", 
-  "ডিমলা পদুমসহর", "দুর্গাপুর", "দলদলিয়া", "ময়মন্তপুর", "বাটী", "বোনারপাড়া", "কালপাণী", "তেলিয়ান", "শ্যামপুর", "বেলতৈল", 
-  "কুখাতাইড়", "চকচকিয়া", "ভরতখালী", "বাঁশহাটা", "পুটিমারী", "ধনারুহা", "খামার ধনারুহা", "মাজবাড়ী", "ধানঘরা", "পূর্ব অনন্তপুর", 
-  "যাদুরতাইড়", "মথরপাড়া", "উল্যা সোনাতলা", "হেলেঞ্চা", "বুরুঙ্গি", "গছাবাড়ী", "অনন্তপুর", "রামনগর", "কচুয়া", "পাঠানপাড়া", 
-  "চন্দনপাট", "ওচমানেরপাড়া", "বালুয়া", "বড়াইকান্দী", "ঝৈলতলা", "পাচিয়ারপুর", "বাউলিয়া", "পচাবস্তা", "ঘুরিদহ", "ঝাড়াবর্ষা", 
-  "যোগীপাড়া", "কচুয়াহাট", "সাথালিয়া", "সেঙ্গুয়া", "হাটবাড়ী", "হাসিলকান্দি", "সাঘাটা", "পবণতাইড়", "কমলপুর", "ভগবানপুর", 
-  "গোরেরপাড়া", "হাপানিয়া", "আগ গড়গড়িয়া", "পাছ গড়গড়িয়া", "নসিরারপাড়া", "সতীতলা", "কিঙ্করপুর", "বাঙ্গাবাড়ী", "চাকুলী", 
-  "জালাল তাইর", "গজারিয়া", "ফলিয়াদিগর", "কামালেরপাড়া", "বারকোনা", "সাহাবাজের পাড়া", "সুজালপুর", "ছিলমানেরপাড়া", 
-  "বাদিনারপাড়া", "থৈকরেরপাড়া", "বেঙ্গারপাড়া", "চিনিরপটল", "কালুরপাড়া", "কুমারপাড়া", "হলদিয়া", "গুয়াবাড়ী", "কানাইপাড়া", 
-  "বেড়া", "গোবিন্দপুর", "আমদিরপাড়া", "আবদুল্লারপাড়া", "শিমুলবাড়ী", "কৈচড়া", "মেছট", "বাজিতনগর", "শিমুলবাড়িয়া", 
-  "বলিয়ারবেড়", "কামারপাড়া", "বগারভিটা", "দৈচড়া", "জাঙ্গালিয়া", "জুমারবাড়ী", "চান্দপাড়া", "মামুদপুর", "বসন্তেরপাড়া", 
-  "কুন্দপাড়া", "কাঠুর", "নলছিয়া", "চেঙ্গালিয়া"
-].sort();
-
-const upazilas = ["সাঘাটা"];
-
 export default function NewAudiencePage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   // ১. সকল ফিল্ডের প্রাথমিক স্টেট
   const initialFormState = {
@@ -65,8 +48,8 @@ export default function NewAudiencePage() {
     risk_tolerance: '', officer_comment: '',
     latitude: '', longitude: '',
     
-    // Section 9: Area & Staff
-    upazila: 'সাঘাটা', village: '', staff_name: '',
+    // Section 9: Area & Staff (Auto Filled)
+    division: '', district: '', upazila: '', union_name: '', ward_no: '', village: '', staff_name: '',
 
     // Files
     photo: null, house_photo: null
@@ -74,14 +57,55 @@ export default function NewAudiencePage() {
 
   const [formData, setFormData] = useState(initialFormState);
 
+  // লগইন করা ভলান্টিয়ারের ডাটা ফেচ করে অটো-সেট করা
   useEffect(() => {
-    const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-    setUser(localUser);
-    // লগিন করা ইউজারের নাম অটোমেটিক সেট হবে, তবে পরিবর্তনযোগ্য
-    if (localUser?.full_name) {
-        setFormData(prev => ({ ...prev, staff_name: localUser.full_name }));
-    }
-  }, []);
+    const fetchVolunteerData = async () => {
+      try {
+        const localUserStr = localStorage.getItem('user');
+        if (!localUserStr) return;
+        
+        const localUser = JSON.parse(localUserStr);
+        setUser(localUser);
+
+        // প্রথমে volunteers টেবিল থেকে খুঁজবে
+        let { data, error } = await supabase
+          .from('volunteers')
+          .select('*')
+          .eq('id', localUser.id)
+          .maybeSingle();
+
+        // যদি volunteers টেবিলে না পায়, তবে members টেবিলে খুঁজবে
+        if (!data) {
+          const { data: memberData } = await supabase
+            .from('members')
+            .select('*')
+            .eq('id', localUser.id)
+            .maybeSingle();
+          data = memberData;
+        }
+
+        // ডাটা পেলে ফর্মে অটো সেট করে দেওয়া হবে
+        if (data) {
+          setFormData(prev => ({
+            ...prev,
+            staff_name: data.full_name || localUser.full_name || '',
+            division: data.division || '',
+            district: data.district || '',
+            upazila: data.upazila || '',
+            union_name: data.union_name || '',
+            ward_no: data.ward_no || '',
+            village: data.village || ''
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    fetchVolunteerData();
+  },[]);
 
   const getGeoLocation = () => {
     setGpsLoading(true);
@@ -115,8 +139,7 @@ export default function NewAudiencePage() {
       const { photo, house_photo, ...dataToSubmit } = formData;
       
       // নাম্বার ফিল্ড কনভার্সন
-      const insertData = { ...dataToSubmit };
-      ['total_members','earning_members','dependent_members','monthly_income','loan_amount'].forEach(key => {
+      const insertData = { ...dataToSubmit };['total_members','earning_members','dependent_members','monthly_income','loan_amount'].forEach(key => {
         // @ts-ignore
         insertData[key] = insertData[key] ? parseInt(insertData[key]) : 0;
       });
@@ -125,8 +148,19 @@ export default function NewAudiencePage() {
       if (error) throw error;
 
       alert("তথ্য সফলভাবে সংরক্ষিত হয়েছে!");
-      // ফর্ম রিসেট করার সময় স্টাফ নেম আগেরটাই রাখা হবে
-      setFormData({ ...initialFormState, staff_name: user?.full_name || '' });
+      
+      // ফর্ম রিসেট করার সময় অটো ফিল্ডগুলো আগেরটাই রাখা হবে
+      setFormData(prev => ({
+        ...initialFormState,
+        staff_name: prev.staff_name,
+        division: prev.division,
+        district: prev.district,
+        upazila: prev.upazila,
+        union_name: prev.union_name,
+        ward_no: prev.ward_no,
+        village: prev.village
+      }));
+
     } catch (err: any) { 
       alert("ত্রুটি: " + err.message); 
     } finally { setLoading(false); }
@@ -146,6 +180,10 @@ export default function NewAudiencePage() {
   const inputClass = "w-full p-3 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition text-sm text-slate-700 bg-white";
   const labelClass = "block text-xs font-bold text-slate-500 mb-1 ml-1";
   const sectionHeaderClass = "text-md font-bold text-emerald-800 border-b border-emerald-100 pb-2 mb-4 flex items-center gap-2 mt-6";
+
+  if (dataLoading) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin text-emerald-600" size={40}/></div>;
+  }
 
   return (
     <div className="animate-in fade-in zoom-in-95 duration-300 pb-10">
@@ -336,36 +374,41 @@ export default function NewAudiencePage() {
             {formData.latitude && <p className="text-[10px] text-slate-400 mt-2 text-center font-mono">Lat: {formData.latitude}, Lon: {formData.longitude}</p>}
           </div>
 
-          {/* ৯. এরিয়া ও স্টাফ তথ্য (নতুন সেকশন) */}
+          {/* ৯. এরিয়া ও স্টাফ তথ্য (Auto-filled) */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-purple-500">
-            <h3 className={sectionHeaderClass}><Map size={18}/> ৯. এরিয়া ও স্টাফ তথ্য</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <div>
-                  <label className={labelClass}>উপজেলা</label>
-                  <select name="upazila" required value={formData.upazila} onChange={handleChange} className={inputClass}>
-                     <option value="">নির্বাচন করুন</option>
-                     {upazilas.map((u, i) => <option key={i} value={u}>{u}</option>)}
-                  </select>
+            <h3 className={sectionHeaderClass}><Map size={18}/> ৯. এরিয়া ও স্টাফ তথ্য (অটো-সেট)</h3>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 md:col-span-2">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">ভলান্টিয়ারের নাম</p>
+                  <p className="text-sm font-bold text-slate-700">{formData.staff_name || 'N/A'}</p>
                </div>
-               <div>
-                  <label className={labelClass}>গ্রাম</label>
-                  <select name="village" required value={formData.village} onChange={handleChange} className={inputClass}>
-                     <option value="">গ্রাম নির্বাচন করুন</option>
-                     {saghataVillages.map((v, i) => <option key={i} value={v}>{v}</option>)}
-                  </select>
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">বিভাগ</p>
+                  <p className="text-sm font-bold text-slate-700">{formData.division || 'N/A'}</p>
                </div>
-               <div>
-                  <label className={labelClass}>স্টাফের নাম</label>
-                  <input 
-                    type="text" 
-                    name="staff_name" 
-                    value={formData.staff_name} 
-                    onChange={handleChange} 
-                    className={inputClass} 
-                    placeholder="স্টাফের নাম"
-                  />
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">জেলা</p>
+                  <p className="text-sm font-bold text-slate-700">{formData.district || 'N/A'}</p>
+               </div>
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">উপজেলা</p>
+                  <p className="text-sm font-bold text-slate-700">{formData.upazila || 'N/A'}</p>
+               </div>
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">ইউনিয়ন</p>
+                  <p className="text-sm font-bold text-slate-700">{formData.union_name || 'N/A'}</p>
+               </div>
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">ওয়ার্ড নং</p>
+                  <p className="text-sm font-bold text-slate-700">{formData.ward_no || 'N/A'}</p>
+               </div>
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">গ্রাম</p>
+                  <p className="text-sm font-bold text-slate-700">{formData.village || 'N/A'}</p>
                </div>
             </div>
+            <p className="text-[10px] text-amber-600 mt-3 font-medium bg-amber-50 p-2 rounded-lg">* উপরের তথ্যগুলো আপনার প্রোফাইল থেকে স্বয়ংক্রিয়ভাবে পূরণ করা হয়েছে।</p>
           </div>
 
           <button disabled={loading} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-emerald-700 shadow-xl hover:shadow-2xl transition flex justify-center items-center gap-2 mt-8">

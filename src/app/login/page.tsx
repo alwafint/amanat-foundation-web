@@ -6,16 +6,15 @@ import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient'; 
 import { 
   Lock, Phone, ArrowLeft, LogIn, AlertCircle, Loader2, 
-  ShieldCheck, Eye, EyeOff 
+  ShieldCheck, Eye, EyeOff, User 
 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   
-  // State Management
-  const[mobile, setMobile] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
-  const[showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,7 +36,7 @@ export default function LoginPage() {
     checkSession();
   }, [router]);
 
-  // --- 2. Helper Functions ---
+  // --- 2. Helper Functions (Role Routing) ---
   const normalizeRole = (role: string) => {
     return role ? role.toLowerCase().trim().replace(/_/g, '-') : 'member';
   };
@@ -47,7 +46,8 @@ export default function LoginPage() {
     const routes: {[key: string]: string } = {
       'admin': '/dashboard/admin',
       'team-leader': '/dashboard/team-leader',
-      'volunteer': '/dashboard/volunteer',
+      'volunteer': '/dashboard/volunteer', 
+      'branch-manager': '/dashboard/branch-manager',
       'staff': '/dashboard/staff',
       'management': '/dashboard/management',
       'super-admin': '/dashboard/super-admin',
@@ -55,53 +55,88 @@ export default function LoginPage() {
     return routes[stdRole] || '/dashboard/member';
   };
 
-  // --- 3. Login Handler ---
+  // --- 3. Master Login Handler ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Basic Validation
-      if (mobile.length < 11) {
-        throw new Error('সঠিক মোবাইল নম্বর দিন (১১ ডিজিট)');
-      }
-      if (password.length < 3) {
-        throw new Error('সঠিক পাসওয়ার্ড দিন');
-      }
+      const id = loginId.trim();
+      const pass = password.trim();
 
-      // Query Database (সবার জন্য একটাই লগইন কোয়েরি)
-      const { data: user, error: dbError } = await supabase
+      if (id.length < 3) throw new Error('সঠিক মোবাইল নম্বর অথবা ইউজারনেম দিন');
+      if (pass.length < 3) throw new Error('সঠিক পাসওয়ার্ড দিন');
+
+      let user = null;
+
+      // ১. Check in 'members' table (By Mobile OR Username)
+      const { data: memberData } = await supabase
         .from('members')
         .select('*')
-        .eq('mobile', mobile.trim())
-        .eq('password', password.trim())
+        .or(`mobile.eq.${id},username.eq.${id}`)
+        .eq('password', pass)
         .maybeSingle();
+        
+      if (memberData) {
+        user = memberData;
+      } 
+      else {
+        // ২. Check in 'volunteers' table (By Mobile OR Username)
+        const { data: volunteerData } = await supabase
+          .from('volunteers')
+          .select('*')
+          .or(`mobile.eq.${id},username.eq.${id}`)
+          .eq('password', pass)
+          .maybeSingle();
+          
+        if (volunteerData) {
+          user = volunteerData;
+        } 
+        else {
+          // ৩. Check in 'team_leader_applications' table (By Mobile ONLY)
+          const { data: tlData } = await supabase
+            .from('team_leader_applications')
+            .select('*')
+            .eq('mobile', id)
+            .eq('password', pass)
+            .maybeSingle();
+            
+          if (tlData) {
+            user = tlData;
+          }
+        }
+      }
 
-      if (dbError) throw dbError;
-
+      // ৪. If no user found in any of the 3 tables
       if (!user) {
-        throw new Error('মোবাইল নম্বর বা পাসওয়ার্ড ভুল!');
+        throw new Error('মোবাইল নম্বর/ইউজারনেম বা পাসওয়ার্ড ভুল!');
       }
 
+      // ৫. Check Account Status
       if (user.status !== 'active') {
-        throw new Error('আপনার অ্যাকাউন্টটি এখনও অনুমোদিত হয়নি। অনুগ্রহ করে অপেক্ষা করুন।');
+        if (user.status === 'pending') {
+           throw new Error('আপনার অ্যাকাউন্টটি এখনও অনুমোদিত হয়নি। অনুগ্রহ করে অপেক্ষা করুন।');
+        } else {
+           throw new Error('আপনার অ্যাকাউন্টটি বর্তমানে স্থগিত বা বাতিল করা হয়েছে।');
+        }
       }
 
-      // Success Logic
+      // ৬. Save Session & Redirect
       const standardRole = normalizeRole(user.role);
       const userData = {
         id: user.id,
         full_name: user.full_name,
         mobile: user.mobile,
+        username: user.username || null, 
         role: standardRole,
-        photo_url: user.photo_url,
-        district: user.district
+        photo_url: user.photo_url || null,
+        district: user.district || null
       };
 
       localStorage.setItem('user', JSON.stringify(userData));
       
-      // Artificial delay for better UX
+      // Artificial delay for smooth UX transition
       setTimeout(() => {
         window.location.href = getDashboardRoute(standardRole);
       }, 500);
@@ -116,7 +151,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden">
       
-      {/* Background Decor (মিনিমাল ডিজাইন) */}
+      {/* Background Decor */}
       <div className="absolute top-0 w-full h-72 bg-gradient-to-b from-[#006A4E] to-[#004e39] rounded-b-[4rem] shadow-xl z-0"></div>
       <div className="absolute top-10 right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl z-0"></div>
       <div className="absolute top-20 left-10 w-32 h-32 bg-[#FFB800]/20 rounded-full blur-2xl z-0"></div>
@@ -145,20 +180,20 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             
-            {/* Mobile Input */}
+            {/* Login ID Input (Mobile or Username) */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-wider">মোবাইল নম্বর</label>
+              <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-wider">মোবাইল নম্বর অথবা ইউজারনেম</label>
               <div className="relative group focus-within:ring-2 ring-[#006A4E]/20 rounded-2xl transition-all">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Phone size={18} className="text-slate-400 group-focus-within:text-[#006A4E] transition-colors" />
+                  <User size={18} className="text-slate-400 group-focus-within:text-[#006A4E] transition-colors" />
                 </div>
                 <input
-                  type="number"
+                  type="text"
                   required
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
                   className="block w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-[#006A4E] focus:bg-white focus:outline-none text-slate-800 font-bold transition-all placeholder:font-normal text-sm shadow-sm"
-                  placeholder="017XXXXXXXX"
+                  placeholder="017XXXXXXXX বা ইউজারনেম"
                 />
               </div>
             </div>
@@ -205,7 +240,7 @@ export default function LoginPage() {
           {/* Footer Links */}
           <div className="mt-8 pt-6 border-t border-slate-100 text-center space-y-4">
             <p className="text-xs font-medium text-slate-500">
-              একাউন্ট নেই? <Link href="/register-volunteer" className="text-[#006A4E] font-extrabold hover:underline">টিম লিডার আবেদন করুন</Link>
+              একাউন্ট নেই? <Link href="/register/team-leader" className="text-[#006A4E] font-extrabold hover:underline">ইউনিয়ন লিডার আবেদন করুন</Link>
             </p>
             
             <Link href="/" className="inline-flex items-center justify-center w-full gap-1.5 text-slate-400 text-[11px] font-bold uppercase tracking-wider hover:text-[#006A4E] transition group bg-slate-50 py-3 rounded-xl">
